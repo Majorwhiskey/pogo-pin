@@ -1,0 +1,24 @@
+---
+source: crates/pogo-cli/src/output.rs
+expression: v
+---
+{
+  "command": "flash",
+  "data": null,
+  "duration_ms": 12,
+  "error": {
+    "code": "DEVICE_NOT_FOUND",
+    "details": null,
+    "hint": "Run `pogo devices` to list connected boards, then pass --device <alias|usb_serial|port>.",
+    "message": "no device matched 'target'"
+  },
+  "ok": false,
+  "pogo_version": "[version]",
+  "schema_version": 1,
+  "warnings": [
+    {
+      "code": "NO_USB_SERIAL",
+      "message": "port path used as identity"
+    }
+  ]
+}

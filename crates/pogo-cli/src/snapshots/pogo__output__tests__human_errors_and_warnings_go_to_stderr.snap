@@ -1,0 +1,7 @@
+---
+source: crates/pogo-cli/src/output.rs
+expression: stderr
+---
+warning[NO_USB_SERIAL]: port path used as identity
+error[DEVICE_NOT_FOUND]: no device matched 'target'
+  hint: Run `pogo devices` to list connected boards, then pass --device <alias|usb_serial|port>.
