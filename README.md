@@ -1,10 +1,10 @@
 # pogo-pin
+
 Give AI coding agents eyes and hands on real hardware. Flash, monitor, and probe ESP32 boards from a CLI or MCP server, with commands that always terminate, return JSON, and use meaningful exit codes.
-# benchctl
 
-**An agent-friendly hardware workbench CLI.** Flash, reset, monitor, probe, and measure ESP32 boards from the terminal, with deterministic, machine-readable output built for AI coding agents (like Claude Code) and humans alike.
+**An agent-friendly hardware workbench CLI (`pogo`).** Flash, reset, monitor, probe, and measure ESP32 boards from the terminal, with deterministic, machine-readable output built for AI coding agents (like Claude Code) and humans alike.
 
-> **Status:** pre-alpha. This README is the project specification. `benchctl` is a working name; check crates.io and Homebrew for availability before the first public release.
+> **Status:** pre-alpha. This README is the project specification. The project is `pogo-pin`; the binary is `pogo` and crates are `pogo-*`. Check crates.io and Homebrew for availability before the first public release.
 >
 > **Last updated:** 2026-10-26
 
@@ -41,17 +41,17 @@ Existing tools don't help because they were designed for a human at a keyboard. 
 
 ### 1.2 The solution
 
-`benchctl` turns the bench into commands that **always terminate**, return **structured JSON**, and use **meaningful exit codes**. With it, an agent can close the loop by itself:
+`pogo` turns the bench into commands that **always terminate**, return **structured JSON**, and use **meaningful exit codes**. With it, an agent can close the loop by itself:
 
 ```
-edit code → build → benchctl run → read JSON result → fix → repeat
+edit code → build → pogo run → read JSON result → fix → repeat
 ```
 
 ### 1.3 Example
 
 ```console
 $ cargo build --release
-$ benchctl run target/riscv32imc-unknown-none-elf/release/test-target \
+$ pogo run target/riscv32imc-unknown-none-elf/release/test-target \
     --until "READY" --timeout 20s --format json
 $ echo $?
 7
@@ -60,7 +60,7 @@ $ echo $?
 ```json
 {
   "schema_version": 1,
-  "benchctl_version": "0.1.0",
+  "pogo_version": "0.1.0",
   "command": "run",
   "ok": false,
   "duration_ms": 6412,
@@ -102,10 +102,10 @@ Exit code `7` means the target faulted. The agent opens `src/sensors.rs:42`, fix
 
 ### 1.4 Interfaces
 
-`benchctl` exposes the same capabilities through two thin frontends over one core library:
+`pogo` exposes the same capabilities through two thin frontends over one core library:
 
-- **CLI** (`benchctl <command>`): for humans, shell scripts, CI, and any agent that can run shell commands.
-- **MCP server** (`benchctl mcp`): the same operations exposed as MCP tools over stdio.
+- **CLI** (`pogo <command>`): for humans, shell scripts, CI, and any agent that can run shell commands.
+- **MCP server** (`pogo mcp`): the same operations exposed as MCP tools over stdio.
 
 ---
 
@@ -137,14 +137,14 @@ Exit code `7` means the target faulted. The agent opens `src/sensors.rs:42`, fix
 
 Only an ESP32-family dev board and a **data-capable** USB cable (many cheap cables are power-only).
 
-Recommended: **ESP32-C3 or ESP32-C6**. They are RISC-V chips, so the Rust test firmware builds with the standard Rust toolchain. ESP32 and ESP32-S3 (Xtensa) are fully supported by `benchctl` itself, but building the Rust test firmware for them requires the Espressif toolchain installed via `espup`.
+Recommended: **ESP32-C3 or ESP32-C6**. They are RISC-V chips, so the Rust test firmware builds with the standard Rust toolchain. ESP32 and ESP32-S3 (Xtensa) are fully supported by `pogo` itself, but building the Rust test firmware for them requires the Espressif toolchain installed via `espup`.
 
 ### 3.2 Full bench (Phase 4+)
 
 | Part | Purpose | Notes |
 |---|---|---|
 | ESP32-C3/S3 dev board | Target under test | Any Espressif dev board works |
-| Raspberry Pi Pico (RP2040) or Pico 2 (RP2350) | Probe board | Runs `benchctl` probe firmware |
+| Raspberry Pi Pico (RP2040) or Pico 2 (RP2350) | Probe board | Runs `pogo` probe firmware |
 | INA226 breakout | Current and voltage measurement | Common modules use a 0.1 Ω shunt, giving roughly 819 mA full scale |
 | BME280 or MPU6050 breakout | Known I2C device for tests | Predictable scan and register-read results |
 | Load switch or logic-level MOSFET module (optional) | Power-cycling the target | Rated for at least 1 A |
@@ -184,22 +184,22 @@ Recommended: **ESP32-C3 or ESP32-C6**. They are RISC-V chips, so the Rust test f
 - **EN and BOOT are driven open-drain only.** The probe either pulls them low or releases them (high-impedance). It never drives them high, because dev boards have their own pull-ups and auto-reset circuits.
 - **I2C0 is for sensor bring-up.** Wire sensors directly to the probe to test them. Don't connect I2C0 to a bus the ESP32 is actively mastering, since two masters will conflict.
 - **USB power bypasses the shunt.** To measure current, power the target from an external supply through the INA226 and use USB for data only (a USB power-blocker adapter isolates VBUS), or use a separate USB-UART adapter on TX/RX/GND. **Never connect an external supply and USB VBUS to the same rail at the same time**, because backfeeding can damage the board or the host's USB port.
-- **Native USB boards re-enumerate.** ESP32-C3/S3/C6 boards using the built-in USB-Serial-JTAG may briefly drop off the bus on reset. `benchctl` identifies devices by USB serial number and reconnects automatically (§6.7). The first ROM boot lines may be lost during re-enumeration.
-- **Cheap CH340 adapters often lack a unique USB serial number.** `benchctl` falls back to the port path and emits a warning.
+- **Native USB boards re-enumerate.** ESP32-C3/S3/C6 boards using the built-in USB-Serial-JTAG may briefly drop off the bus on reset. `pogo` identifies devices by USB serial number and reconnects automatically (§6.7). The first ROM boot lines may be lost during re-enumeration.
+- **Cheap CH340 adapters often lack a unique USB serial number.** `pogo` falls back to the port path and emits a warning.
 
 ### 3.5 OS setup
 
 **Linux.** Add your user to the serial group (`dialout` on Debian/Ubuntu, `uucp` on Arch), then log out and back in. Building requires `libudev-dev` (Debian/Ubuntu) or the equivalent. ModemManager may grab `/dev/ttyACM*` devices briefly when they appear, so add a udev rule:
 
 ```
-# /etc/udev/rules.d/99-benchctl.rules
+# /etc/udev/rules.d/99-pogo.rules
 SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", ENV{ID_MM_DEVICE_IGNORE}="1"
 SUBSYSTEM=="tty", ATTRS{idVendor}=="2e8a", ENV{ID_MM_DEVICE_IGNORE}="1"
 ```
 
 Then run `sudo udevadm control --reload-rules && sudo udevadm trigger`.
 
-**macOS.** Use `/dev/cu.*` ports, not `/dev/tty.*` (the `tty` variants block waiting for carrier detect). `benchctl` picks `cu` ports automatically.
+**macOS.** Use `/dev/cu.*` ports, not `/dev/tty.*` (the `tty` variants block waiting for carrier detect). `pogo` picks `cu` ports automatically.
 
 **Windows.** Install CP210x or CH340 drivers if your board uses those bridges. Ports appear as `COMn`.
 
@@ -211,13 +211,13 @@ Then run `sudo udevadm control --reload-rules && sudo udevadm trigger`.
 
 ```
  ┌────────────────────┐      ┌────────────────────┐
- │   benchctl (CLI)   │      │  benchctl mcp      │
+ │   pogo (CLI)   │      │  pogo mcp      │
  │ clap, output, exit │      │ rmcp, stdio, tokio │
  └─────────┬──────────┘      └─────────┬──────────┘
            └──────────────┬────────────┘
                           ▼
                  ┌──────────────────┐
-                 │  benchctl-core   │  sync, no printing, typed results
+                 │  pogo-core   │  sync, no printing, typed results
                  └──────────────────┘
    ┌──────────┬──────────┼───────────┬─────────────┬──────────┐
    ▼          ▼          ▼           ▼             ▼          ▼
@@ -236,13 +236,13 @@ discovery  transport   serial     flash/reset   probe      symbolize
 ### 4.2 Workspace layout
 
 ```
-benchctl/
+pogo-pin/
 ├── Cargo.toml                    # workspace root; excludes firmware/*
 ├── README.md                     # this spec
 ├── CLAUDE.md                     # agent working rules (see §14.3)
-├── benchctl.example.toml
+├── pogo.example.toml
 ├── crates/
-│   ├── benchctl-core/            # library: all logic, no printing, no process::exit
+│   ├── pogo-core/            # library: all logic, no printing, no process::exit
 │   │   └── src/
 │   │       ├── lib.rs
 │   │       ├── error.rs          # BenchError, ErrorCode, exit codes, hints
@@ -255,13 +255,13 @@ benchctl/
 │   │       ├── flash.rs          # Flasher trait + espflash implementation
 │   │       ├── reset.rs
 │   │       ├── symbolize.rs      # ELF + addr2line
-│   │       ├── probe/            # probe client over benchctl-protocol
+│   │       ├── probe/            # probe client over pogo-protocol
 │   │       ├── power.rs          # INA226 conversion, stats
 │   │       ├── guardrails.rs
 │   │       └── audit.rs
-│   ├── benchctl-protocol/        # no_std shared host↔probe types (serde + postcard)
-│   ├── benchctl-cli/             # binary `benchctl`: clap, output formatting, exit mapping
-│   └── benchctl-mcp/             # MCP server built on core; launched via `benchctl mcp`
+│   ├── pogo-protocol/        # no_std shared host↔probe types (serde + postcard)
+│   ├── pogo-cli/             # binary `pogo`: clap, output formatting, exit mapping
+│   └── pogo-mcp/             # MCP server built on core; launched via `pogo mcp`
 ├── firmware/                     # separate cargo projects (different targets)
 │   ├── probe/                    # Embassy firmware for RP2040/RP2350
 │   └── test-target/              # esp-hal fixture firmware for tests
@@ -279,8 +279,8 @@ The firmware projects must be excluded from the root workspace (`exclude = ["fir
 
 ### 4.3 Design rules
 
-1. **The core never prints and never exits.** It returns typed results or errors. Only `benchctl-cli` writes to stdout/stderr and sets exit codes.
-2. **The core is synchronous.** Blocking I/O with explicit deadlines is easier to reason about for serial work. `benchctl-mcp` calls the core through `tokio::task::spawn_blocking`.
+1. **The core never prints and never exits.** It returns typed results or errors. Only `pogo-cli` writes to stdout/stderr and sets exit codes.
+2. **The core is synchronous.** Blocking I/O with explicit deadlines is easier to reason about for serial work. `pogo-mcp` calls the core through `tokio::task::spawn_blocking`.
 3. **Every operation takes a deadline.** No core function can block forever.
 4. **Device identity is the USB serial number,** not the port path, which changes across reboots and re-enumerations.
 5. **All I/O goes through a `Transport` trait** so everything is testable without hardware.
@@ -378,7 +378,7 @@ pub struct CaptureResult {
 | Symbolization | `object`, `addr2line` | ELF address → function/file/line |
 | Locking | `fd-lock` | Per-device lock files |
 | Paths | `directories` | Platform config/state/runtime dirs |
-| Config | `toml` | `benchctl.toml` |
+| Config | `toml` | `pogo.toml` |
 | Signals | `ctrlc` | Clean shutdown with partial results |
 | Probe protocol | `postcard` (with its COBS helpers), `heapless` | Compact `no_std` binary messages |
 | MCP | `rmcp` (features: server, macros, schemars, transport-io), `tokio` | Official Rust MCP SDK, stdio transport |
@@ -404,7 +404,7 @@ This section is the heart of the project. Treat it as a stable public API.
 
 ### 6.2 Output formats
 
-`--format human|json|jsonl` (short `-f`), or set `BENCHCTL_FORMAT=json` once for a whole session. Default is `human`.
+`--format human|json|jsonl` (short `-f`), or set `POGO_FORMAT=json` once for a whole session. Default is `human`.
 
 - `json`: a single envelope (§6.3) printed when the command finishes.
 - `jsonl`: streaming commands (`serial capture`, `run`, `power measure`) emit events as they happen, such as `{"type":"line", ...}`, and always finish with `{"type":"result", ...envelope}`. Non-streaming commands emit just the result line.
@@ -417,7 +417,7 @@ Every command in `json` mode prints exactly this shape:
 | Field | Type | Meaning |
 |---|---|---|
 | `schema_version` | integer | Envelope/schema version (starts at 1) |
-| `benchctl_version` | string | Tool version |
+| `pogo_version` | string | Tool version |
 | `command` | string | Dotted command name, e.g. `serial.capture` |
 | `ok` | bool | `true` only when the exit code is 0 |
 | `duration_ms` | integer | Wall time of the command |
@@ -430,7 +430,7 @@ Error example:
 ```json
 {
   "schema_version": 1,
-  "benchctl_version": "0.1.0",
+  "pogo_version": "0.1.0",
   "command": "flash",
   "ok": false,
   "duration_ms": 38,
@@ -438,7 +438,7 @@ Error example:
   "error": {
     "code": "AMBIGUOUS_DEVICE",
     "message": "2 devices matched; pass --device to choose one",
-    "hint": "Run `benchctl devices` and pass --device <alias|usb_serial|port>.",
+    "hint": "Run `pogo devices` and pass --device <alias|usb_serial|port>.",
     "details": {
       "candidates": [
         { "port": "/dev/ttyACM0", "usb_serial": "F4:12:FA:9C:3A:10", "kind": "esp32_target" },
@@ -490,7 +490,7 @@ Output is bounded so agents don't flood their context:
 - `--max-line-len` (default 1000 characters); longer lines are cut and marked `"truncated": true`.
 - A soft cap of about 200 KB per envelope, with a `OUTPUT_TRUNCATED` warning when hit.
 
-On Ctrl-C or SIGTERM, `benchctl` stops cleanly, releases locks and probe pins it was pulsing, prints the partial envelope, and exits with 130.
+On Ctrl-C or SIGTERM, `pogo` stops cleanly, releases locks and probe pins it was pulsing, prints the partial envelope, and exits with 130.
 
 ### 6.6 No interactivity
 
@@ -519,7 +519,7 @@ Each device has a lock file in the runtime directory, keyed by USB serial number
 ### 6.10 Stability
 
 - `schema_version` covers the envelope and all `data` shapes. Within a version, changes are additive only. Renames or removals bump the version.
-- `benchctl schema <command>` prints the JSON Schema for that command's envelope. Generated schemas are committed to `schemas/` and CI fails if they drift from the code.
+- `pogo schema <command>` prints the JSON Schema for that command's envelope. Generated schemas are committed to `schemas/` and CI fails if they drift from the code.
 
 ### 6.11 Help text
 
@@ -534,8 +534,8 @@ Every command's `--help` includes a one-line summary, at least two examples, the
 ```
 -d, --device <SELECTOR>        Target device: alias, USB serial, port, or "auto"
     --probe <SELECTOR>         Probe device [default: "probe" alias, else auto]
--f, --format <FORMAT>          human | json | jsonl  [env: BENCHCTL_FORMAT]
-    --config <PATH>            Config file  [env: BENCHCTL_CONFIG]
+-f, --format <FORMAT>          human | json | jsonl  [env: POGO_FORMAT]
+    --config <PATH>            Config file  [env: POGO_CONFIG]
     --timeout <DURATION>       Overall deadline for this command
     --wait-lock <DURATION>     Wait for a busy device instead of failing
     --dry-run                  Describe what a mutating command would do; change nothing
@@ -544,13 +544,13 @@ Every command's `--help` includes a one-line summary, at least two examples, the
     --no-color
 ```
 
-### 7.1 `benchctl devices`
+### 7.1 `pogo devices`
 
 ```
-benchctl devices [--all]
+pogo devices [--all]
 ```
 
-Lists connected serial devices and classifies each as `esp32_target`, `benchctl_probe`, or `unknown_serial` (shown only with `--all`). Never opens ports, so it is fast and always safe.
+Lists connected serial devices and classifies each as `esp32_target`, `pogo_probe`, or `unknown_serial` (shown only with `--all`). Never opens ports, so it is fast and always safe.
 
 Classification uses USB IDs:
 
@@ -560,7 +560,7 @@ Classification uses USB IDs:
 | `10c4:ea60` | Silicon Labs CP210x bridge (possible ESP32 board) |
 | `1a86:7523`, `1a86:55d4` | WCH CH340 / CH9102 bridge (possible ESP32 board) |
 | `0403:6001`, `0403:6015` | FTDI bridge (possible ESP32 board) |
-| `2e8a:*` + product string `benchctl-probe` | benchctl probe |
+| `2e8a:*` + product string `pogo-probe` | pogo probe |
 
 ```json
 "data": {
@@ -582,10 +582,10 @@ Classification uses USB IDs:
 }
 ```
 
-### 7.2 `benchctl doctor`
+### 7.2 `pogo doctor`
 
 ```
-benchctl doctor [--deep]
+pogo doctor [--deep]
 ```
 
 Runs environment checks and reports each as `pass`, `warn`, or `fail` with a hint: config parses, devices visible, port permissions (Linux group membership), ModemManager interference, probe present and firmware compatible. `--deep` also opens ports and performs the probe handshake.
@@ -593,25 +593,25 @@ Runs environment checks and reports each as `pass`, `warn`, or `fail` with a hin
 ```json
 "data": {
   "checks": [
-    { "id": "config", "status": "pass", "message": "Loaded ./benchctl.toml" },
+    { "id": "config", "status": "pass", "message": "Loaded ./pogo.toml" },
     { "id": "permissions", "status": "fail", "message": "User not in 'dialout' group",
       "hint": "sudo usermod -aG dialout $USER, then log out and back in" }
   ]
 }
 ```
 
-### 7.3 `benchctl info`
+### 7.3 `pogo info`
 
 ```
-benchctl info
+pogo info
 ```
 
 Connects to the ROM bootloader and reports chip, revision, features, MAC address, and flash size. **Note:** entering the bootloader resets the target; this is documented in its help text.
 
-### 7.4 `benchctl flash`
+### 7.4 `pogo flash`
 
 ```
-benchctl flash <IMAGE> [--address <ADDR>] [--chip <CHIP>] [--flash-baud <BAUD>]
+pogo flash <IMAGE> [--address <ADDR>] [--chip <CHIP>] [--flash-baud <BAUD>]
                [--bootloader <BIN>] [--partition-table <CSV|BIN>]
                [--no-verify] [--no-reset]
                [--erase-all --confirm <USB_SERIAL>]
@@ -639,18 +639,18 @@ benchctl flash <IMAGE> [--address <ADDR>] [--chip <CHIP>] [--flash-baud <BAUD>]
 }
 ```
 
-### 7.5 `benchctl reset`
+### 7.5 `pogo reset`
 
 ```
-benchctl reset [--mode run|bootloader] [--via auto|dtr-rts|probe]
+pogo reset [--mode run|bootloader] [--via auto|dtr-rts|probe]
 ```
 
 `auto` uses the probe when `target_en`/`target_boot` pins are configured and the probe is connected, otherwise DTR/RTS toggling. Waits for re-enumeration on native USB boards.
 
-### 7.6 `benchctl serial capture`
+### 7.6 `pogo serial capture`
 
 ```
-benchctl serial capture [--baud <N>] [--reset]
+pogo serial capture [--baud <N>] [--reset]
                         [--until <REGEX>]... [--fail-on <REGEX>]...
                         [--no-default-fail-patterns] [--settle <DURATION>]
                         [--max-lines <N>] [--max-line-len <N>]
@@ -717,29 +717,29 @@ Task watchdog got triggered
 
 `--record <FILE>` saves the raw byte stream with timestamps as JSONL, which is useful for bug reports and for test fixtures (§12).
 
-### 7.7 `benchctl serial send`
+### 7.7 `pogo serial send`
 
 ```
-benchctl serial send <DATA | -> [--line-ending lf|crlf|none] [--hex]
+pogo serial send <DATA | -> [--line-ending lf|crlf|none] [--hex]
                      [--expect <REGEX>] [--timeout <DURATION>]
 ```
 
 Writes data (default line ending `lf`; `--hex` accepts `"de ad be ef"`; `-` reads from stdin). With `--expect`, it then runs the capture engine until the pattern matches, inheriting fail-on detection. Output includes `bytes_written` and the response capture.
 
-### 7.8 `benchctl run` (the main agent command)
+### 7.8 `pogo run` (the main agent command)
 
 ```
-benchctl run <IMAGE> [flash flags] [capture flags] [--no-flash]
+pogo run <IMAGE> [flash flags] [capture flags] [--no-flash]
 ```
 
 Locks the device once, flashes, resets into run mode, and captures as if `--reset` were given. `data` contains `device`, `flash`, and `capture`. The exit code comes from the capture outcome unless flashing failed. `--no-flash` skips flashing (reset and capture only), which is useful for rerunning tests.
 
-### 7.9 `benchctl i2c` (requires probe)
+### 7.9 `pogo i2c` (requires probe)
 
 ```
-benchctl i2c scan  [--bus 0] [--range 0x08-0x77]
-benchctl i2c read  <ADDR> [--reg <REG>] --len <N> [--bus 0]
-benchctl i2c write <ADDR> <BYTE>... [--bus 0]
+pogo i2c scan  [--bus 0] [--range 0x08-0x77]
+pogo i2c read  <ADDR> [--reg <REG>] --len <N> [--bus 0]
+pogo i2c write <ADDR> <BYTE>... [--bus 0]
 ```
 
 Bus 0 is the user bus; bus 1 is reserved for the INA226. `read` with `--reg` writes the register address and then does a repeated-start read. Scan results include a `may_be` hint from a small built-in table (for example, `0x76` → BME280/BMP280, `0x68` → MPU6050/DS3231, `0x3c` → SSD1306, `0x50–0x57` → EEPROM).
@@ -753,29 +753,29 @@ Bus 0 is the user bus; bus 1 is reserved for the INA226. `read` with `--reg` wri
 ```
 
 ```console
-$ benchctl i2c read 0x68 --reg 0x75 --len 1 -f json   # MPU6050 WHO_AM_I
+$ pogo i2c read 0x68 --reg 0x75 --len 1 -f json   # MPU6050 WHO_AM_I
 ```
 
 ```json
 "data": { "bus": 0, "addr": "0x68", "reg": "0x75", "bytes_hex": ["0x68"], "bytes_dec": [104] }
 ```
 
-### 7.10 `benchctl gpio` (requires probe)
+### 7.10 `pogo gpio` (requires probe)
 
 ```
-benchctl gpio get   <PIN>
-benchctl gpio set   <PIN> <low|high|release>
-benchctl gpio pulse <PIN> [--level low|high] [--duration 100ms]
+pogo gpio get   <PIN>
+pogo gpio set   <PIN> <low|high|release>
+pogo gpio pulse <PIN> [--level low|high] [--duration 100ms]
 ```
 
 `<PIN>` is a name declared in the config's `[pins]` table. Open-drain pins accept only `low` and `release`. Pulses are timed on the probe, not the host, so they're precise. Pin states persist after the command exits, until changed, released, or the probe loses USB.
 
-### 7.11 `benchctl power` (requires probe)
+### 7.11 `pogo power` (requires probe)
 
 ```
-benchctl power measure [--duration 5s] [--interval 1ms] [--out samples.csv]
-benchctl power on | off
-benchctl power cycle [--off-time 500ms]
+pogo power measure [--duration 5s] [--interval 1ms] [--out samples.csv]
+pogo power on | off
+pogo power cycle [--off-time 500ms]
 ```
 
 The probe streams raw INA226 samples; the host converts and computes statistics.
@@ -792,20 +792,20 @@ The probe streams raw INA226 samples; the host converts and computes statistics.
 }
 ```
 
-### 7.12 `benchctl probe`
+### 7.12 `pogo probe`
 
 ```
-benchctl probe info       # firmware version, protocol version, board, uptime, driven pins
-benchctl probe selftest   # INA226 present, pins released correctly, I2C buses idle
+pogo probe info       # firmware version, protocol version, board, uptime, driven pins
+pogo probe selftest   # INA226 present, pins released correctly, I2C buses idle
 ```
 
 ### 7.13 Utility commands
 
 ```
-benchctl config show | path | validate   # merged config with source of each value
-benchctl schema <COMMAND> | --all [--out schemas/]
-benchctl completions <bash|zsh|fish|powershell>
-benchctl mcp                              # start the MCP server on stdio (§9)
+pogo config show | path | validate   # merged config with source of each value
+pogo schema <COMMAND> | --all [--out schemas/]
+pogo completions <bash|zsh|fish|powershell>
+pogo mcp                              # start the MCP server on stdio (§9)
 ```
 
 ---
@@ -823,7 +823,7 @@ The probe firmware is deliberately simple. It exposes a USB CDC-ACM serial devic
 - The host sends one request at a time; the probe echoes the request's `seq` in its response(s).
 - The host applies a per-request timeout (default 500 ms) and reports `PROTOCOL` errors on timeout or decode failure.
 
-### 8.3 Messages (`benchctl-protocol`, `no_std`)
+### 8.3 Messages (`pogo-protocol`, `no_std`)
 
 ```rust
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -865,7 +865,7 @@ pub enum Response {
 pub struct PowerSample { pub shunt_raw: i16, pub bus_raw: u16 }
 ```
 
-`benchctl-protocol` must build for both the host and `thumbv6m-none-eabi` / `thumbv8m.main-none-eabihf`. Enable `heapless`'s `serde` feature.
+`pogo-protocol` must build for both the host and `thumbv6m-none-eabi` / `thumbv8m.main-none-eabihf`. Enable `heapless`'s `serde` feature.
 
 ### 8.4 Handshake and versioning
 
@@ -881,7 +881,7 @@ The host's first message on every connection is `Hello`. The probe answers with 
 
 ### 8.6 Firmware structure
 
-Embassy tasks: `usb_task` (CDC-ACM), `protocol_task` (decode, dispatch, encode), `power_task` (INA226 sampling into a channel), and a watchdog feeder. USB product string: `benchctl-probe`. Use a pid.codes test PID during development and apply for a free one before publishing.
+Embassy tasks: `usb_task` (CDC-ACM), `protocol_task` (decode, dispatch, encode), `power_task` (INA226 sampling into a channel), and a watchdog feeder. USB product string: `pogo-probe`. Use a pid.codes test PID during development and apply for a free one before publishing.
 
 ### 8.7 Building and flashing
 
@@ -891,7 +891,7 @@ Build with `cargo build --release` inside `firmware/probe/`, convert to `.uf2` w
 
 ## 9. MCP server
 
-`benchctl mcp` starts an MCP server on stdio using `rmcp`. It is a thin adapter: each tool calls the same core function as the CLI command (via `spawn_blocking`) and returns the same `data` object as JSON.
+`pogo mcp` starts an MCP server on stdio using `rmcp`. It is a thin adapter: each tool calls the same core function as the CLI command (via `spawn_blocking`) and returns the same `data` object as JSON.
 
 | MCP tool | CLI equivalent | Mutates hardware? |
 |---|---|---|
@@ -917,16 +917,16 @@ Build with `cargo build --release` inside `firmware/probe/`, convert to `.uf2` w
 - Every tool takes an optional `timeout` and `device` argument with the same semantics as the CLI.
 - Errors return the same `{ code, message, hint }` object as the CLI.
 
-**Using it with Claude Code:** the CLI already works through Claude Code's shell from day one. To add the MCP server too, register `benchctl mcp` with `claude mcp add` or a project-level `.mcp.json` file; check the Claude Code MCP documentation for the current syntax.
+**Using it with Claude Code:** the CLI already works through Claude Code's shell from day one. To add the MCP server too, register `pogo mcp` with `claude mcp add` or a project-level `.mcp.json` file; check the Claude Code MCP documentation for the current syntax.
 
 ---
 
 ## 10. Configuration
 
-**Discovery order** (later wins on conflicts): user config (`~/.config/benchctl/config.toml` or the platform equivalent) → nearest `benchctl.toml` walking up from the current directory → `BENCHCTL_CONFIG` → `--config`. `benchctl config show` displays the merged result and where each value came from.
+**Discovery order** (later wins on conflicts): user config (`~/.config/pogo/config.toml` or the platform equivalent) → nearest `pogo.toml` walking up from the current directory → `POGO_CONFIG` → `--config`. `pogo config show` displays the merged result and where each value came from.
 
 ```toml
-# benchctl.toml
+# pogo.toml
 schema = 1
 
 [defaults]
@@ -943,7 +943,7 @@ reset = "auto"              # auto | dtr-rts | probe
 parser = "auto"             # auto | esp-idf | rust-log | raw
 
 [devices.probe]
-kind = "benchctl-probe"
+kind = "pogo-probe"
 match = { usb_serial = "E6614103E7452D2F" }
 
 [pins.target_en]
@@ -989,7 +989,7 @@ max_power_cycles_per_minute = 10
 
 **`--dry-run`:** every mutating command supports it and returns the planned actions in `data.plan` without touching hardware.
 
-**Audit log:** every mutating action is appended as JSONL to the platform state directory (for example `~/.local/state/benchctl/audit.jsonl`) with timestamp, command, device serial, arguments, and result. This gives a human a clear record of what an agent did to their hardware.
+**Audit log:** every mutating action is appended as JSONL to the platform state directory (for example `~/.local/state/pogo/audit.jsonl`) with timestamp, command, device serial, arguments, and result. This gives a human a clear record of what an agent did to their hardware.
 
 ---
 
@@ -1021,10 +1021,10 @@ max_power_cycles_per_minute = 10
 ```console
 cargo test --workspace                       # everything that doesn't need hardware
 cargo insta review                           # review snapshot changes
-BENCHCTL_HIL=1 cargo test -p benchctl-cli --test hil -- --test-threads=1
+POGO_HIL=1 cargo test -p pogo-cli --test hil -- --test-threads=1
 ```
 
-HIL tests are skipped unless `BENCHCTL_HIL=1` is set, and they always run single-threaded.
+HIL tests are skipped unless `POGO_HIL=1` is set, and they always run single-threaded.
 
 ---
 
@@ -1042,7 +1042,7 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 - [ ] `devices` fully implemented; `schema` command; `completions`
 - [ ] CI (§15)
 
-**Acceptance:** `cargo test` passes on Linux, macOS, and Windows. `benchctl devices -f json` prints a valid envelope matching its schema. Every exit code has a test. Help snapshots exist for every command.
+**Acceptance:** `cargo test` passes on Linux, macOS, and Windows. `pogo devices -f json` prints a valid envelope matching its schema. Every exit code has a test. Help snapshots exist for every command.
 
 ### Phase 1: Serial
 
@@ -1064,11 +1064,11 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 - [ ] ELF symbolization; Rust panic location parsing
 - [ ] Test-target firmware
 
-**Acceptance:** `benchctl run <test-target ELF> --until READY` exits 0. `serial send panic` (or `run` with a planted panic) exits 7 with `panic.location` pointing at the correct line. With two boards connected and no `--device`, `flash` exits 3 with candidates listed.
+**Acceptance:** `pogo run <test-target ELF> --until READY` exits 0. `serial send panic` (or `run` with a planted panic) exits 7 with `panic.location` pointing at the correct line. With two boards connected and no `--device`, `flash` exits 3 with candidates listed.
 
 ### Phase 3: MCP server
 
-- [ ] `benchctl-mcp` crate; `benchctl mcp` subcommand; all tools in §9
+- [ ] `pogo-mcp` crate; `pogo mcp` subcommand; all tools in §9
 - [ ] Verify with the MCP Inspector
 - [ ] Document setup with Claude Code
 
@@ -1076,7 +1076,7 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 
 ### Phase 4: Probe firmware, GPIO, I2C
 
-- [ ] `benchctl-protocol` crate (no_std) with property tests
+- [ ] `pogo-protocol` crate (no_std) with property tests
 - [ ] Probe firmware: USB CDC, framing, handshake, pin allow-list, safe states, GPIO, I2C
 - [ ] Host probe client; `probe info|selftest`, `gpio`, `i2c`
 - [ ] `reset --via probe`
@@ -1097,13 +1097,14 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 - [ ] Release automation, Homebrew tap, crates.io publish
 - [ ] Demo recording (§16)
 
-**Acceptance:** on a fresh machine, install via Homebrew or the shell installer, `benchctl doctor` passes, and the demo is reproducible.
+**Acceptance:** on a fresh machine, install via Homebrew or the shell installer, `pogo doctor` passes, and the demo is reproducible.
 
 ### Stretch goals
 
 - Hardware-in-the-loop CI on a Raspberry Pi self-hosted GitHub Actions runner
 - STM32 and nRF targets via probe-rs
-- `benchctl watch`: a ratatui TUI for humans
+- Arduino (AVR) boards and Lattice ECP5 FPGAs
+- `pogo watch`: a ratatui TUI for humans
 - Logic-analyzer mode using RP2040 PIO
 - Multi-board farm support
 
@@ -1126,10 +1127,10 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 ### 14.3 CLAUDE.md template
 
 ```markdown
-# CLAUDE.md — working rules for benchctl
+# CLAUDE.md — working rules for pogo
 
 ## Project
-benchctl is an agent-friendly hardware workbench CLI and MCP server for ESP32 boards.
+pogo is an agent-friendly hardware workbench CLI and MCP server for ESP32 boards.
 README.md is the spec. §6 (CLI contract) and §11 (guardrails) are non-negotiable.
 
 ## Current phase
@@ -1141,7 +1142,7 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 
 ## Architecture rules
-- benchctl-core never prints and never calls process::exit; it returns typed results.
+- pogo-core never prints and never calls process::exit; it returns typed results.
 - Outcomes (timeout, fault) are data in Ok(...); Rust errors mean "couldn't run".
 - Every blocking operation takes a Deadline.
 - All I/O goes through the Transport trait. Tests use MockTransport or ReplayTransport.
@@ -1152,7 +1153,7 @@ cargo test --workspace
 2. clap definition with long help: summary, 2+ examples, exit codes, data shape
 3. Snapshot tests for human and JSON output
 4. Exit code tests
-5. Regenerate schemas/ (benchctl schema --all --out schemas/)
+5. Regenerate schemas/ (pogo schema --all --out schemas/)
 6. MCP tool (Phase 3 onward)
 7. Update the command reference in README.md
 
@@ -1196,7 +1197,7 @@ cargo test --workspace
 **Release:**
 
 - Use cargo-dist (`dist`) to build binaries for Linux x86_64 and aarch64, macOS arm64 and x86_64, and Windows x86_64, plus shell and PowerShell installers and a Homebrew formula in a tap repository.
-- Publish crates to crates.io (`benchctl-protocol`, `benchctl-core`, `benchctl-cli`, `benchctl-mcp`).
+- Publish crates to crates.io (`pogo-protocol`, `pogo-core`, `pogo-cli`, `pogo-mcp`).
 - Attach probe `.uf2` files to each GitHub release.
 - Semantic versioning for the tool; `schema_version` versions the JSON contract independently.
 - Generate `CHANGELOG.md` from Conventional Commits with `git-cliff`.
@@ -1205,11 +1206,11 @@ cargo test --workspace
 
 ## 16. Launch and showcase checklist
 
-- [ ] **Hero demo** at the top of this README: a 60–90 second recording of Claude Code finding and fixing a planted firmware bug on a real board, using only `benchctl`.
+- [ ] **Hero demo** at the top of this README: a 60–90 second recording of Claude Code finding and fixing a planted firmware bug on a real board, using only `pogo`.
 - [ ] Terminal recordings (asciinema) of `devices`, `run`, `i2c scan`, and `power measure`.
 - [ ] Architecture diagram and a photo of the wired bench in `docs/`.
 - [ ] Measured numbers: time from code edit to verified boot, capture overhead, test count and coverage.
-- [ ] A write-up: "Designing CLIs for AI agents: lessons from benchctl."
+- [ ] A write-up: "Designing CLIs for AI agents: lessons from pogo."
 - [ ] Share with the ESP32 and Rust embedded communities, and collect feedback from real users.
 
 ---
