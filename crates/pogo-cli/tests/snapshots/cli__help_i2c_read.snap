@@ -1,0 +1,73 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Read bytes from a device, optionally from a register
+
+Usage: pogo i2c read [OPTIONS] --len <LEN> <ADDR>
+
+Arguments:
+  <ADDR>
+          
+
+Options:
+      --reg <REG>
+          Register to read from (write then repeated-start read)
+
+      --len <LEN>
+          Number of bytes to read
+
+      --bus <BUS>
+          [default: 0]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Requires the probe. With --reg, writes the register address then does a repeated-start read.
+
+Examples:
+  pogo i2c read 0x68 --reg 0x75 --len 1
+  pogo i2c read 0x76 --reg 0xd0 --len 1 -f json
+
+Exit codes: 0 ok, 3 probe not found, 6 probe I/O, NACK, or protocol
+
+JSON data: { bus, addr, reg, bytes_hex, bytes_dec }

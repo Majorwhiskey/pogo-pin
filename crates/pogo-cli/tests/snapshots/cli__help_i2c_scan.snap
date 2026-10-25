@@ -1,0 +1,68 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Scan a bus for responding addresses
+
+Usage: pogo i2c scan [OPTIONS]
+
+Options:
+      --bus <BUS>
+          [default: 0]
+
+      --range <RANGE>
+          Address range, e.g. 0x08-0x77
+          
+          [default: 0x08-0x77]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Requires the probe. Bus 0 is the user bus; bus 1 is reserved for the INA226.
+
+Examples:
+  pogo i2c scan
+  pogo i2c scan --range 0x70-0x77 -f json
+
+Exit codes: 0 ok, 3 probe not found, 6 probe I/O or protocol
+
+JSON data: { bus, range, found: [ { addr, addr_dec, may_be } ] }

@@ -1,0 +1,60 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Switch target power on
+
+Usage: pogo power on [OPTIONS]
+
+Options:
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Requires the probe and a load switch on the configured switch pin.
+
+Examples:
+  pogo power off
+  pogo power on -f json
+
+Exit codes: 0 ok, 3 probe not found, 6 probe I/O, 8 guardrail refused
+
+JSON data: { on }

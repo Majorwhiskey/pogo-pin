@@ -1,0 +1,65 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+List connected serial devices and classify them
+
+Usage: pogo devices [OPTIONS]
+
+Options:
+      --all
+          Also show unrecognized serial devices
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Never opens ports, so it is fast and always safe.
+
+Examples:
+  pogo devices
+  pogo devices --all -f json
+
+Exit codes: 0 ok, 10 config invalid
+
+JSON data: { devices: [ { alias, kind, port, usb: { vid, pid, serial_number, manufacturer,
+product }, chip_hint, locked_by } ] }. kind is esp32_target, pogo_probe, or unknown_serial
+(the last only with --all).

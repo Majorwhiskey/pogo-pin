@@ -1,0 +1,99 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Flash an ELF or raw .bin image to the target
+
+Usage: pogo flash [OPTIONS] <IMAGE>
+
+Arguments:
+  <IMAGE>
+          ELF (preferred) or raw .bin image
+
+Options:
+      --address <ADDR>
+          Flash address for a raw .bin, e.g. 0x10000
+
+      --chip <CHIP>
+          Chip type [default: auto-detect]
+
+      --flash-baud <BAUD>
+          Baud rate used while flashing
+
+      --bootloader <BIN>
+          Custom bootloader image
+
+      --partition-table <CSV|BIN>
+          Custom partition table
+
+      --no-verify
+          Skip read-back verification
+
+      --no-reset
+          Stay in the bootloader after flashing
+
+      --erase-all
+          Erase the entire flash first (guarded; requires --confirm)
+
+      --confirm <USB_SERIAL>
+          USB serial of the device, confirming --erase-all
+
+      --allow-bootloader-write
+          Allow raw writes to the bootloader and partition table area
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+An ELF is converted to an app image and flashed with bootloader and partition table.
+A raw .bin requires --address. Writes below the app region need --allow-bootloader-write.
+Verifies by default and resets into run mode unless --no-reset.
+
+Examples:
+  pogo flash target/riscv32imc-unknown-none-elf/release/app
+  pogo flash app.bin --address 0x10000 -d target -f json
+  pogo flash app.elf --erase-all --confirm F4:12:FA:9C:3A:10
+
+Exit codes: 0 ok, 3 device not found/ambiguous, 4 timeout, 5 permission denied,
+6 device I/O, 8 guardrail refused, 9 device busy
+
+JSON data: { device, chip, flash_size_bytes, regions: [ { address, bytes, kind } ],
+verified, reset_after, duration_ms }

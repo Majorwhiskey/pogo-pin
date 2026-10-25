@@ -1,0 +1,64 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Check the environment: config, devices, permissions, probe
+
+Usage: pogo doctor [OPTIONS]
+
+Options:
+      --deep
+          Also open ports and perform the probe handshake
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Checks that the config parses, devices are visible, ports are accessible, and the probe
+firmware is compatible.
+
+Examples:
+  pogo doctor
+  pogo doctor --deep -f json
+
+Exit codes: 0 all checks passed or warned, 1 a check failed, 10 config invalid
+
+JSON data: { checks: [ { id, status: pass|warn|fail, message, hint } ] }

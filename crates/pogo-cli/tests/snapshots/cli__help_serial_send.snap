@@ -1,0 +1,78 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Write data to the target, optionally waiting for a response
+
+Usage: pogo serial send [OPTIONS] <DATA>
+
+Arguments:
+  <DATA>
+          Data to send, or "-" to read stdin
+
+Options:
+      --line-ending <LINE_ENDING>
+          Line ending appended to the data
+          
+          [default: lf]
+          [possible values: lf, crlf, none]
+
+      --hex
+          Interpret data as hex bytes, e.g. "de ad be ef"
+
+      --expect <REGEX>
+          Capture until a response line matches
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Writes data with a line ending. With --expect, captures until a response matches,
+with the same fault detection as serial capture.
+
+Examples:
+  pogo serial send ping --expect pong -f json
+  pogo serial send --hex 'de ad be ef' --line-ending none
+  echo reboot | pogo serial send -
+
+Exit codes: 0 ok, 4 timeout waiting for --expect, 6 device I/O, 7 target fault, 9 device busy
+
+JSON data: { device, bytes_written, capture }

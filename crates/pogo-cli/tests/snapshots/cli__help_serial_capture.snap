@@ -1,0 +1,107 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Capture serial output until a pattern, fault, or deadline
+
+Usage: pogo serial capture [OPTIONS]
+
+Options:
+      --reset
+          Reset into run mode first and capture from the first boot byte
+
+      --baud <N>
+          Baud rate
+
+      --until <REGEX>
+          Stop with success when a line matches (repeatable)
+
+      --fail-on <REGEX>
+          Stop with TARGET_FAULT when a line matches (repeatable)
+
+      --no-default-fail-patterns
+          Don't use the built-in panic/abort/brownout patterns
+
+      --settle <DURATION>
+          Keep reading this long after an --until match to catch late crashes
+
+      --max-lines <N>
+          Maximum lines returned; extra lines are omitted from the middle
+          
+          [default: 500]
+
+      --max-line-len <N>
+          Maximum characters per line; longer lines are truncated
+          
+          [default: 1000]
+
+      --parser <PARSER>
+          Log line parser
+          
+          [default: auto]
+          [possible values: auto, esp-idf, rust-log, raw]
+
+      --elf <PATH>
+          ELF used to symbolize backtraces
+
+      --raw
+          Keep ANSI escape codes
+
+      --record <FILE>
+          Save the raw byte stream with timestamps as JSONL
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Reads lines until an --until pattern matches, a fault is detected, or the deadline
+(default 10s). Built-in fail patterns catch panics, aborts, brownouts, and watchdogs.
+
+Examples:
+  pogo serial capture --reset --until READY --timeout 15s -f json
+  pogo serial capture --fail-on 'E \(\d+\) app' --elf app.elf
+  pogo serial capture --timeout 3s --record session.jsonl
+
+Exit codes: 0 matched (or completed with no --until), 4 timeout, 6 device vanished (eof),
+7 target fault, 9 device busy
+
+JSON data: { device, outcome: matched|completed|fault|timeout|eof, matched, line_count,
+omitted_lines, boot_count, resets, panic, lines: [ { t_ms, level, tag, device_ts_ms, text } ] }

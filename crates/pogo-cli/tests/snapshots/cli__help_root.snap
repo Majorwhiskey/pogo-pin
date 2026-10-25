@@ -1,0 +1,81 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Agent-friendly hardware workbench: flash, monitor, and probe ESP32 boards
+
+Usage: pogo [OPTIONS] <COMMAND>
+
+Commands:
+  devices      List connected serial devices and classify them
+  doctor       Check the environment: config, devices, permissions, probe
+  info         Read chip, revision, features, MAC, and flash size (resets the target)
+  flash        Flash an ELF or raw .bin image to the target
+  reset        Reset the target into run mode or the bootloader
+  serial       Capture and send serial data
+  run          Flash, reset, and capture in one step (the main agent command)
+  i2c          I2C bus access through the probe
+  gpio         GPIO control through the probe
+  power        Current measurement and power switching through the probe
+  probe        Probe board information and self-test
+  config       Inspect and validate configuration
+  schema       Print the JSON Schema for a command's envelope
+  completions  Print shell completions
+  mcp          Start the MCP server on stdio
+  help         Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Every command terminates, writes results only to stdout, and returns a documented exit code.
+Use -f json (or POGO_FORMAT=json) for one JSON envelope:
+  { schema_version, pogo_version, command, ok, duration_ms, data, error, warnings }
+
+Examples:
+  pogo devices -f json
+  pogo run app.elf --until READY --timeout 20s -f json
+
+Exit codes:
+  0 ok   1 internal/not implemented   2 usage   3 device not found/ambiguous
+  4 timeout   5 permission denied   6 device I/O or probe protocol   7 target fault
+  8 guardrail refused   9 device busy   10 config invalid   130 interrupted

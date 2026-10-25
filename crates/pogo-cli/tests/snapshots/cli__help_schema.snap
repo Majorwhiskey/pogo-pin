@@ -1,0 +1,68 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Print the JSON Schema for a command's envelope
+
+Usage: pogo schema [OPTIONS] [COMMAND]
+
+Arguments:
+  [COMMAND]
+          Dotted command name, e.g. serial.capture
+
+Options:
+      --all
+          Generate schemas for every command
+
+      --out <DIR>
+          Write schema files into this directory instead of stdout
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Examples:
+  pogo schema serial.capture
+  pogo schema --all --out schemas/
+
+Exit codes: 0 ok, 2 unknown command
+
+JSON data: the JSON Schema document itself (not wrapped in an envelope)

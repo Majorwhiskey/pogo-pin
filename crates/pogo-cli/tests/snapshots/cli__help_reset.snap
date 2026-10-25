@@ -1,0 +1,73 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Reset the target into run mode or the bootloader
+
+Usage: pogo reset [OPTIONS]
+
+Options:
+      --mode <MODE>
+          Mode to boot into
+          
+          [default: run]
+          [possible values: run, bootloader]
+
+      --via <VIA>
+          How to toggle reset
+          
+          [default: auto]
+          [possible values: auto, dtr-rts, probe]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+--via auto uses the probe when target_en/target_boot pins are configured, otherwise DTR/RTS.
+Waits for native USB boards to re-enumerate.
+
+Examples:
+  pogo reset
+  pogo reset --mode bootloader --via probe -f json
+
+Exit codes: 0 ok, 3 device not found/ambiguous, 4 timeout, 6 device I/O, 9 device busy
+
+JSON data: { device, mode, via, reconnected }

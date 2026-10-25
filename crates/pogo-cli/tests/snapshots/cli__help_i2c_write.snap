@@ -1,0 +1,70 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+Write bytes to a device
+
+Usage: pogo i2c write [OPTIONS] <ADDR> <BYTES>...
+
+Arguments:
+  <ADDR>
+          
+
+  <BYTES>...
+          Bytes to write, e.g. 0x75 0x00
+
+Options:
+      --bus <BUS>
+          [default: 0]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+
+Global options:
+  -d, --device <SELECTOR>
+          Target device: alias, USB serial, port, or "auto"
+
+      --probe <SELECTOR>
+          Probe device [default: "probe" alias, else auto]
+
+  -f, --format <FORMAT>
+          Output format [default: human]
+          
+          [env: POGO_FORMAT=]
+          [possible values: human, json, jsonl]
+
+      --config <PATH>
+          Config file
+          
+          [env: POGO_CONFIG=]
+
+      --timeout <DURATION>
+          Overall deadline for this command, e.g. 500ms, 10s, 2m
+
+      --wait-lock <DURATION>
+          Wait for a busy device instead of failing
+
+      --dry-run
+          Describe what a mutating command would do; change nothing
+
+  -v, --verbose...
+          More logs on stderr (repeatable)
+
+  -q, --quiet
+          Errors only on stderr
+
+      --no-color
+          Disable colors
+
+Requires the probe. Writes to protected addresses (default 0x50-0x57) are refused.
+
+Examples:
+  pogo i2c write 0x68 0x6b 0x00
+  pogo i2c write 0x3c 0x00 0xaf --dry-run -f json
+
+Exit codes: 0 ok, 3 probe not found, 6 probe I/O or NACK, 8 guardrail refused
+
+JSON data: { bus, addr, bytes_written }

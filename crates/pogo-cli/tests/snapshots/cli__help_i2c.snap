@@ -1,0 +1,30 @@
+---
+source: crates/pogo-cli/tests/cli.rs
+expression: help
+---
+I2C bus access through the probe
+
+Usage: pogo i2c [OPTIONS] <COMMAND>
+
+Commands:
+  scan   Scan a bus for responding addresses
+  read   Read bytes from a device, optionally from a register
+  write  Write bytes to a device
+  help   Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+
+Global options:
+  -d, --device <SELECTOR>     Target device: alias, USB serial, port, or "auto"
+      --probe <SELECTOR>      Probe device [default: "probe" alias, else auto]
+  -f, --format <FORMAT>       Output format [default: human] [env: POGO_FORMAT=] [possible values:
+                              human, json, jsonl]
+      --config <PATH>         Config file [env: POGO_CONFIG=]
+      --timeout <DURATION>    Overall deadline for this command, e.g. 500ms, 10s, 2m
+      --wait-lock <DURATION>  Wait for a busy device instead of failing
+      --dry-run               Describe what a mutating command would do; change nothing
+  -v, --verbose...            More logs on stderr (repeatable)
+  -q, --quiet                 Errors only on stderr
+      --no-color              Disable colors
