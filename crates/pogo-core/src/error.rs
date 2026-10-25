@@ -1,4 +1,4 @@
-//! Error types, stable error codes, and the exit code table (README §6.4).
+//! Error types, stable error codes, and the exit code table (docs/agent-contract.md §6.4).
 
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -68,7 +68,7 @@ impl ErrorCode {
         }
     }
 
-    /// Process exit code for this error (README §6.4).
+    /// Process exit code for this error (docs/agent-contract.md §6.4).
     pub fn exit_code(self) -> u8 {
         match self {
             ErrorCode::Internal | ErrorCode::NotImplemented => 1,
@@ -163,16 +163,16 @@ impl PogoError {
                 "Unplug and replug the probe, then run `pogo probe info`.".to_string()
             }
             PogoError::ProtocolMismatch { host_major, .. } => format!(
-                "Flash probe firmware that speaks protocol v{host_major} (see README §8.7)."
+                "Flash probe firmware that speaks protocol v{host_major} (see docs/probe-firmware.md §8.7)."
             ),
             PogoError::GuardrailRefused { .. } => {
-                "See README §11 for the guardrail and the flag that allows this, if any.".to_string()
+                "See docs/guardrails.md for the guardrail and the flag that allows this, if any.".to_string()
             }
             PogoError::Config(_) => {
                 "Run `pogo config validate` to locate the problem.".to_string()
             }
             PogoError::NotImplemented(_) => {
-                "This command is planned but not built yet; see the README §13 roadmap.".to_string()
+                "This command is planned but not built yet; see docs/roadmap.md.".to_string()
             }
             PogoError::Internal(_) => return None,
         };

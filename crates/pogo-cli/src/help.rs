@@ -1,4 +1,4 @@
-//! Long help text: examples, exit codes, and data shape for every command (README §6.11).
+//! Long help text: examples, exit codes, and data shape for every command (docs/agent-contract.md §6.11).
 //!
 //! Agents learn the tool by reading `--help`, so keep these accurate.
 

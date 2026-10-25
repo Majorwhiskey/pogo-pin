@@ -1,1 +1,1 @@
-//! Placeholder; implemented in a later phase (README §13).
+//! Placeholder; implemented in a later phase (docs/roadmap.md).

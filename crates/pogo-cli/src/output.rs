@@ -1,4 +1,4 @@
-//! Output formatting and stream discipline (README §6.1–6.2).
+//! Output formatting and stream discipline (docs/agent-contract.md §6.1–6.2).
 //!
 //! stdout carries results only; stderr carries errors, warnings, and logs in human mode.
 

@@ -1,4 +1,4 @@
-//! The JSON result envelope shared by every command (README §6.3).
+//! The JSON result envelope shared by every command (docs/agent-contract.md §6.3).
 
 use schemars::JsonSchema;
 use serde::Serialize;
