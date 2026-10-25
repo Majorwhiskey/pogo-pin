@@ -1,0 +1,28 @@
+[package]
+name = "pogo-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+clap = { version = "4.6.7", features = ["derive", "env", "wrap_help"] }
+clap_complete = "4.6.11"
+pogo-core = { version = "0.1.0", path = "../pogo-core" }
+serde = "1.0.229"
+serde_json = "1.0.154"
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "pogo"
+path = "src/main.rs"
+
+[dev-dependencies]
+assert_cmd = "2.2.2"
+insta = { version = "1.49.0", features = ["json"] }
+predicates = "3.1.4"
