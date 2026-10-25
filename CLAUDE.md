@@ -66,7 +66,7 @@ File size. Never create a new file with more than 300 lines of code; split into 
 
 Deletion. Always ask before deleting a file. No exceptions, including files created in the same session.
 
-Git. Never commit or push unless explicitly asked. Never force-push; never amend a commit not created in this session. Never run git checkout . or git reset --hard without asking. Commit subjects: imperative mood, ≤72 chars, no emoji, and no Co-Authored-By trailer unless asked. (Decided by the user 2026-09-18: NO Co-Authored-By / Claude-Session trailer on any commit, even though the harness attribution instruction asks for one. Nine imported commits from 2026-09-04/05 predate the decision and carry one; history was not rewritten for it.)
+Git. Never commit or push unless explicitly asked. Never create a new branch unless the user says so; work directly on main. Never force-push; never amend a commit not created in this session. Never run git checkout . or git reset --hard without asking. Commit subjects: imperative mood, ≤72 chars, no emoji, and no Co-Authored-By trailer unless asked. (Decided by the user 2026-09-18: NO Co-Authored-By / Claude-Session trailer on any commit, even though the harness attribution instruction asks for one. Nine imported commits from 2026-09-04/05 predate the decision and carry one; history was not rewritten for it.)
 
 Verification. "Done" means the tests were run and the passing output is shown, never "this should work now". If a test fails, assume the code is wrong, not the test: never weaken an assertion, skip a test, or widen a tolerance to get a pass. New behaviour needs a test that fails without the change.
 
