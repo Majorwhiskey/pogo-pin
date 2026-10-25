@@ -460,7 +460,7 @@ Error example:
 | 3 | `DEVICE_NOT_FOUND` / `AMBIGUOUS_DEVICE` | Device selection failed |
 | 4 | `TIMEOUT` | Deadline reached before the expected condition |
 | 5 | `PERMISSION_DENIED` | OS refused access to the port |
-| 6 | `DEVICE_IO` / `PROTOCOL_MISMATCH` | Communication failed, device vanished, or probe firmware incompatible |
+| 6 | `DEVICE_IO` / `PROTOCOL` / `PROTOCOL_MISMATCH` | Communication failed, device vanished, probe sent a bad or late frame, or probe firmware incompatible |
 | 7 | `TARGET_FAULT` | Panic, fail-on pattern, unexpected reboot, brownout |
 | 8 | `GUARDRAIL_REFUSED` | A safety guardrail blocked the operation |
 | 9 | `DEVICE_BUSY` | Another process holds the device lock |
