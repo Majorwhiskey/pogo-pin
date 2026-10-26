@@ -1,0 +1,2 @@
+# LF everywhere so schema drift checks and snapshots compare equal on Windows.
+* text=auto eol=lf
