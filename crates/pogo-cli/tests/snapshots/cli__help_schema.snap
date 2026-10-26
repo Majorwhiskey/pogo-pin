@@ -63,6 +63,6 @@ Examples:
   pogo schema serial.capture
   pogo schema --all --out schemas/
 
-Exit codes: 0 ok, 2 unknown command
+Exit codes: 0 ok, 1 command has no schema yet, 2 unknown command
 
 JSON data: the JSON Schema document itself (not wrapped in an envelope)

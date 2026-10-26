@@ -1,0 +1,6 @@
+---
+source: crates/pogo-cli/tests/config.rs
+expression: valid
+---
+Config is valid:
+  [bench]/proj/pogo.toml

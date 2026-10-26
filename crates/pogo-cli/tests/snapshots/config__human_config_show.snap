@@ -1,0 +1,6 @@
+---
+source: crates/pogo-cli/tests/config.rs
+expression: show
+---
+devices.target.kind = "esp32"  # [bench]/proj/pogo.toml
+devices.target.match = {"vid":12346}  # [bench]/proj/pogo.toml

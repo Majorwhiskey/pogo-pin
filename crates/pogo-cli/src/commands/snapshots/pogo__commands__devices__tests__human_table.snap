@@ -1,0 +1,7 @@
+---
+source: crates/pogo-cli/src/commands/devices.rs
+expression: out
+---
+PORT                    KIND          ALIAS  USB SERIAL         HINT
+/dev/cu.usbmodem1101    esp32_target  -      F4:12:FA:9C:3A:10  Espressif native USB (ESP32-S2/S3/C3/C6/H2)
+/dev/cu.usbserial-0001  esp32_target  -      -                  Silicon Labs CP210x bridge (possible ESP32 board)

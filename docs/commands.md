@@ -33,6 +33,8 @@ Classification uses USB IDs:
 | `0403:6001`, `0403:6015` | FTDI bridge (possible ESP32 board) |
 | `2e8a:*` + product string `pogo-probe` | pogo probe |
 
+`alias` is the first config device (by name) whose `match` fields all match; an unrecognized port with an alias is shown without `--all`. On macOS only the `/dev/cu.*` node is listed, not its `/dev/tty.*` twin. Results are sorted by port. `locked_by` stays `null` until device locks land (Phase 1).
+
 ```json
 "data": {
   "devices": [
@@ -278,5 +280,21 @@ pogo schema <COMMAND> | --all [--out schemas/]
 pogo completions <bash|zsh|fish|powershell>
 pogo mcp                              # start the MCP server on stdio (§9)
 ```
+
+### `pogo schema`
+
+Prints the JSON Schema (2020-12) for a command's envelope as a bare document, not wrapped in an envelope. `--all` prints an object keyed by command name; `--all --out DIR` writes `DIR/<command>.json` and replies with `"data": { "files": [...] }`. Only commands with a defined data shape have schemas (currently `devices`, `config.show`, `config.path`, `config.validate`); other known commands give `NOT_IMPLEMENTED` (exit 1) and unknown names give `USAGE` (exit 2). `cargo test` fails if `schemas/` is stale.
+
+### `pogo config`
+
+Files are discovered and merged as described in [§10](configuration.md). Tables merge key by key and later files win; any other value (including arrays and `match` tables) replaces the earlier one whole. User and project files are optional; a file given with `--config`/`POGO_CONFIG` must exist.
+
+- `config path`: candidate files in merge order, whether or not they exist. Never fails.
+  `"data": { "files": [ { "path": "/repo/pogo.toml", "kind": "user|project|explicit", "exists": true } ] }`
+- `config show`: only the values that are set, plus the file each one came from.
+  `"data": { "config": { "defaults": { "baud": 115200 } }, "sources": [ { "key": "defaults.baud", "source": "/repo/pogo.toml" } ] }`
+- `config validate`: `"data": { "files": [ "/repo/pogo.toml" ], "valid": true }`
+
+Unknown keys, wrong types, bad durations, invalid regexes in `serial.extra_fail_on`, malformed `i2c_protected_addrs`, an unsupported `schema`, and devices missing `kind` or `match` (or pins missing `probe_pin`) after merging all fail with `CONFIG_INVALID` (exit 10). The message names the file, and the line for per-file errors.
 
 [Back to README](../README.md)

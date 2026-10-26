@@ -1,0 +1,6 @@
+---
+source: crates/pogo-cli/tests/config.rs
+expression: err
+---
+error[CONFIG_INVALID]: invalid configuration: [bench]/proj/pogo.toml: devices.target: missing `match`
+  hint: Run `pogo config validate` to locate the problem.

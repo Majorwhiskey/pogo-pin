@@ -26,5 +26,6 @@ path = "src/main.rs"
 [dev-dependencies]
 assert_cmd = "2.2.2"
 insta = { version = "1.49.0", features = ["json", "redactions"] }
+jsonschema = { version = "0.60.1", default-features = false }
 predicates = "3.1.4"
 serde_json = "1.0.154"

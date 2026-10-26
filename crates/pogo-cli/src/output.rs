@@ -24,7 +24,6 @@ pub struct Reply {
 }
 
 impl Reply {
-    #[expect(dead_code, reason = "used by commands implemented later in Phase 0")]
     pub fn ok<T: Serialize + Render>(data: &T, style: &Style) -> Self {
         let mut human = String::new();
         data.render_human(&mut human, style);
@@ -46,7 +45,6 @@ impl Reply {
     }
 }
 
-#[expect(dead_code, reason = "used by commands implemented later in Phase 0")]
 fn to_value<T: Serialize>(data: &T) -> serde_json::Value {
     // Result types are plain structs; serialization cannot fail short of a bug.
     serde_json::to_value(data)
@@ -54,7 +52,6 @@ fn to_value<T: Serialize>(data: &T) -> serde_json::Value {
 }
 
 /// Human-readable rendering for a command's `data`.
-#[expect(dead_code, reason = "used by commands implemented later in Phase 0")]
 pub trait Render {
     fn render_human(&self, out: &mut String, style: &Style);
 }
@@ -85,7 +82,6 @@ impl Style {
         }
     }
 
-    #[expect(dead_code, reason = "used by commands implemented later in Phase 0")]
     pub fn bold(&self, text: &str) -> String {
         self.paint("1", text)
     }

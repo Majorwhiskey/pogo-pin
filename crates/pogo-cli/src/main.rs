@@ -1,4 +1,5 @@
 mod cli;
+mod commands;
 mod help;
 mod output;
 
@@ -32,13 +33,26 @@ fn main() -> ExitCode {
         quiet: cli.global.quiet,
     };
     let command = cli.command.name();
-    let reply = dispatch(cli);
+    let reply = dispatch(cli, &style);
     let code = printer.finish(command, elapsed_ms(start), reply);
     ExitCode::from(code)
 }
 
-fn dispatch(cli: Cli) -> Reply {
+fn dispatch(cli: Cli, style: &Style) -> Reply {
     match cli.command {
+        Command::Devices { all } => commands::devices::run(all, cli.global.config, style),
+        Command::Config(cmd) => commands::config::run(&cmd, cli.global.config, style),
+        Command::Schema { command, out, .. } => {
+            match commands::schema::run(command.as_deref(), out.as_deref(), style) {
+                commands::schema::SchemaOutput::Reply(reply) => reply,
+                commands::schema::SchemaOutput::Raw(text) => {
+                    use std::io::Write;
+                    let _ = std::io::stdout().lock().write_all(text.as_bytes());
+                    // The schema document is the output; there is no envelope.
+                    std::process::exit(0);
+                }
+            }
+        }
         Command::Completions { shell } => {
             let mut cmd = Cli::command();
             clap_complete::generate(shell, &mut cmd, "pogo", &mut std::io::stdout());

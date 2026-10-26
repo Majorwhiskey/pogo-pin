@@ -1,0 +1,249 @@
+{
+  "$defs": {
+    "DeviceInfo": {
+      "properties": {
+        "alias": {
+          "description": "Config alias whose `match` selects this device, if any.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "chip_hint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "$ref": "#/$defs/DeviceKind"
+        },
+        "locked_by": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LockHolder"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Process holding this device's lock, if any."
+        },
+        "port": {
+          "type": "string"
+        },
+        "usb": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UsbDescriptor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "port"
+      ],
+      "type": "object"
+    },
+    "DeviceKind": {
+      "description": "What a connected serial device appears to be.",
+      "enum": [
+        "esp32_target",
+        "pogo_probe",
+        "unknown_serial"
+      ],
+      "type": "string"
+    },
+    "DevicesResult": {
+      "description": "`data` for `pogo devices`.",
+      "properties": {
+        "devices": {
+          "items": {
+            "$ref": "#/$defs/DeviceInfo"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "devices"
+      ],
+      "type": "object"
+    },
+    "ErrorBody": {
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ErrorCode"
+        },
+        "details": true,
+        "hint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    },
+    "ErrorCode": {
+      "description": "Stable machine-readable error code. Serialized as `SCREAMING_SNAKE_CASE`.\n\nChanging a code's name or exit code is a breaking change to the agent contract.",
+      "enum": [
+        "INTERNAL",
+        "NOT_IMPLEMENTED",
+        "USAGE",
+        "DEVICE_NOT_FOUND",
+        "AMBIGUOUS_DEVICE",
+        "TIMEOUT",
+        "PERMISSION_DENIED",
+        "DEVICE_IO",
+        "PROTOCOL",
+        "PROTOCOL_MISMATCH",
+        "TARGET_FAULT",
+        "GUARDRAIL_REFUSED",
+        "DEVICE_BUSY",
+        "CONFIG_INVALID",
+        "INTERRUPTED"
+      ],
+      "type": "string"
+    },
+    "LockHolder": {
+      "properties": {
+        "command": {
+          "type": "string"
+        },
+        "pid": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "pid",
+        "command"
+      ],
+      "type": "object"
+    },
+    "UsbDescriptor": {
+      "description": "USB descriptor strings; IDs are lowercase hex such as `0x303a`.",
+      "properties": {
+        "manufacturer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pid": {
+          "type": "string"
+        },
+        "product": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "serial_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "vid": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "vid",
+        "pid"
+      ],
+      "type": "object"
+    },
+    "Warning": {
+      "description": "Something worth knowing that did not cause the command to fail.",
+      "properties": {
+        "code": {
+          "description": "Stable `SCREAMING_SNAKE_CASE` code, e.g. `OUTPUT_TRUNCATED`.",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "command": {
+      "description": "Dotted command name, e.g. `serial.capture`.",
+      "type": "string"
+    },
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DevicesResult"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Command-specific result. May be present even when `ok` is false (partial results)."
+    },
+    "duration_ms": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ErrorBody"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ok": {
+      "description": "`true` only when the exit code is 0.",
+      "type": "boolean"
+    },
+    "pogo_version": {
+      "type": "string"
+    },
+    "schema_version": {
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/Warning"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "pogo_version",
+    "command",
+    "ok",
+    "duration_ms",
+    "warnings"
+  ],
+  "title": "pogo devices envelope",
+  "type": "object"
+}
