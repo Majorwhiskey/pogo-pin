@@ -6,12 +6,19 @@ use serde_json::Value;
 use crate::config::{ConfigPathResult, ConfigShowResult, ConfigValidateResult};
 use crate::discovery::DevicesResult;
 use crate::envelope::Envelope;
+use crate::flash::{FlashData, InfoData};
+use crate::reset::ResetData;
+use crate::run::RunData;
 use crate::serial::send::SerialSendData;
 use crate::serial::session::SerialCaptureData;
 
 /// Commands whose `data` shape is defined, in the order `schema --all` emits them.
 pub const COMMANDS_WITH_SCHEMA: &[&str] = &[
     "devices",
+    "info",
+    "flash",
+    "reset",
+    "run",
     "serial.capture",
     "serial.send",
     "config.show",
@@ -23,6 +30,10 @@ pub const COMMANDS_WITH_SCHEMA: &[&str] = &[
 pub fn envelope_schema(command: &str) -> Option<Value> {
     let mut schema = match command {
         "devices" => schema_for!(Envelope<DevicesResult>),
+        "info" => schema_for!(Envelope<InfoData>),
+        "flash" => schema_for!(Envelope<FlashData>),
+        "reset" => schema_for!(Envelope<ResetData>),
+        "run" => schema_for!(Envelope<RunData>),
         "serial.capture" => schema_for!(Envelope<SerialCaptureData>),
         "serial.send" => schema_for!(Envelope<SerialSendData>),
         "config.show" => schema_for!(Envelope<ConfigShowResult>),
@@ -48,7 +59,7 @@ mod tests {
             assert_eq!(s["title"], format!("pogo {cmd} envelope"));
             assert!(s["properties"]["data"].is_object(), "{cmd}");
         }
-        assert!(envelope_schema("flash").is_none());
+        assert!(envelope_schema("i2c.scan").is_none());
     }
 
     #[test]

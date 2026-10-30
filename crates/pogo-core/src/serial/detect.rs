@@ -38,8 +38,10 @@ pub struct PanicReport {
     pub message: Option<String>,
     /// Parsed from a Rust `panicked at file:line:col` message; no ELF needed.
     pub location: Option<PanicLocation>,
-    /// Program counters from an ESP-IDF style `Backtrace:` line, e.g. `0x42001234`.
+    /// Program counters from the backtrace, e.g. `0x42001234`.
     pub backtrace: Vec<String>,
+    /// `backtrace` resolved against the ELF (`--elf` or the config's `elf`); empty without.
+    pub frames: Vec<crate::symbolize::Frame>,
 }
 
 /// `rst:0x1 (POWERON),boot:0xc (SPI_FAST_FLASH_BOOT)` → code `0x1`, reason `POWERON`.
@@ -88,7 +90,13 @@ pub enum BlockEnd {
 pub fn panic_block_end(text: &str) -> BlockEnd {
     if parse_reset(text, 0).is_some() {
         BlockEnd::Before
-    } else if text.trim_start().starts_with("Backtrace:") {
+    } else if text
+        .trim_start()
+        .strip_prefix("Backtrace:")
+        .is_some_and(|rest| rest.contains("0x"))
+    {
+        // ESP-IDF puts the whole backtrace on this line. esp-backtrace prints a bare
+        // `Backtrace:` and the addresses on the lines after it, so that one is Inside.
         BlockEnd::LastLine
     } else {
         BlockEnd::Inside
@@ -102,6 +110,7 @@ pub fn panic_report(line_index: usize, block: &[&str]) -> PanicReport {
         message: None,
         location: None,
         backtrace: Vec::new(),
+        frames: Vec::new(),
     };
     for (i, text) in block.iter().enumerate() {
         if let Some(after) = text.split_once("panicked at ").map(|(_, a)| a) {
@@ -119,11 +128,20 @@ pub fn panic_report(line_index: usize, block: &[&str]) -> PanicReport {
                 .filter(|pc| pc.starts_with("0x"))
                 .map(str::to_string)
                 .collect();
+        } else if let Some(pc) = bare_address(text) {
+            report.backtrace.push(pc);
         } else if report.message.is_none() && text.contains("Guru Meditation Error") {
             report.message = Some(text.trim().to_string());
         }
     }
     report
+}
+
+/// esp-backtrace lists one address per line, e.g. `0x400d1a2b`.
+fn bare_address(text: &str) -> Option<String> {
+    let word = text.split_whitespace().next()?;
+    let hex = word.strip_prefix("0x")?;
+    (hex.len() == 8 && hex.bytes().all(|b| b.is_ascii_hexdigit())).then(|| word.to_string())
 }
 
 /// After `panicked at `: either `src/main.rs:42:5:` (message on the next line) or the

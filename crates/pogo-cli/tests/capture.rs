@@ -229,33 +229,3 @@ fn record_writes_a_replayable_session() {
     let second: Value = serde_json::from_slice(&out.stdout).unwrap();
     assert_eq!(first["data"]["lines"], second["data"]["lines"]);
 }
-
-/// Recorded from an ESP32-WROOM-32 devkit (CH340 bridge): ROM boot text, then an app
-/// whose output is not text at 115200 baud.
-#[test]
-fn real_esp32_devkit_boot_replays() {
-    let real = format!(
-        "{}/../../tests/fixtures/real/esp32_devkit_boot.jsonl",
-        env!("CARGO_MANIFEST_DIR")
-    );
-    let out = Command::cargo_bin("pogo")
-        .unwrap()
-        .env("POGO_REPLAY", &real)
-        .args([
-            "serial",
-            "capture",
-            "--timeout",
-            "300ms",
-            "--wait-lock",
-            "30s",
-        ])
-        .args(["--reset", "--until", "rst:0x", "-f", "json"])
-        .assert()
-        .code(0)
-        .get_output()
-        .clone();
-    let v: Value = serde_json::from_slice(&out.stdout).unwrap();
-    assert_eq!(v["data"]["resets"][0]["reason"], "POWERON_RESET");
-    assert_eq!(v["data"]["resets"][0]["code"], "0x1");
-    assert_eq!(v["data"]["lines"][0]["text"], "ets Jul 29 2019 12:21:46");
-}

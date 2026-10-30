@@ -12,11 +12,14 @@ pub struct SerialTransport {
 }
 
 impl SerialTransport {
-    /// Open `name` with DTR and RTS both deasserted. Opening with default line states can
-    /// reset boards whose auto-reset circuit watches DTR/RTS (docs/commands.md §7.6).
+    /// Open `name` without resetting the target, ending with DTR and RTS deasserted.
+    ///
+    /// ESP32 auto-reset circuits pull EN low only while RTS is asserted and DTR is not.
+    /// The OS asserts both on open, which is harmless, so leave DTR alone at open and
+    /// release RTS before DTR: the reset combination never occurs. (Forcing DTR off at
+    /// open reset an ESP32-WROOM-32 devkit on every open.)
     pub fn open(name: &str, baud: u32) -> Result<Self, PogoError> {
         let port = serialport::new(name, baud)
-            .dtr_on_open(false)
             .timeout(Duration::from_millis(10))
             .open()
             .map_err(|e| open_error(name, &e))?;
@@ -25,6 +28,7 @@ impl SerialTransport {
             name: name.to_string(),
         };
         t.set_rts(false)?;
+        t.set_dtr(false)?;
         Ok(t)
     }
 

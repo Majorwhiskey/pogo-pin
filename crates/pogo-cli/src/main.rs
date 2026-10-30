@@ -60,6 +60,14 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
             format,
             style,
         ),
+        Command::Info => commands::flash::info(&cli.global, style),
+        Command::Flash(args) => commands::flash::flash(&cli.global, &args, style),
+        Command::Reset { mode, via } => commands::reset::reset(&cli.global, mode, via, style),
+        Command::Run {
+            flash,
+            capture,
+            no_flash,
+        } => commands::run::run(&cli.global, &flash, &capture, no_flash, format, style),
         Command::Devices { all } => commands::devices::run(all, cli.global.config, style),
         Command::Config(cmd) => commands::config::run(&cmd, cli.global.config, style),
         Command::Schema { command, out, .. } => {

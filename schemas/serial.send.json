@@ -156,6 +156,43 @@
       ],
       "type": "string"
     },
+    "Frame": {
+      "properties": {
+        "address": {
+          "description": "The backtrace address this frame came from, e.g. `0x400d28cd`.",
+          "type": "string"
+        },
+        "file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "function": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "inlined": {
+          "description": "Code inlined into the next frame of the same address.",
+          "type": "boolean"
+        },
+        "line": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "address",
+        "inlined"
+      ],
+      "type": "object"
+    },
     "Level": {
       "oneOf": [
         {
@@ -269,9 +306,16 @@
     "PanicReport": {
       "properties": {
         "backtrace": {
-          "description": "Program counters from an ESP-IDF style `Backtrace:` line, e.g. `0x42001234`.",
+          "description": "Program counters from the backtrace, e.g. `0x42001234`.",
           "items": {
             "type": "string"
+          },
+          "type": "array"
+        },
+        "frames": {
+          "description": "`backtrace` resolved against the ELF (`--elf` or the config's `elf`); empty without.",
+          "items": {
+            "$ref": "#/$defs/Frame"
           },
           "type": "array"
         },
@@ -301,7 +345,8 @@
       },
       "required": [
         "line_index",
-        "backtrace"
+        "backtrace",
+        "frames"
       ],
       "type": "object"
     },

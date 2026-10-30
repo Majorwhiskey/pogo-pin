@@ -2,6 +2,9 @@
 
 pub mod config;
 pub mod devices;
+pub mod flash;
+pub mod reset;
+pub mod run;
 pub mod schema;
 pub mod serial;
 pub mod serial_send;

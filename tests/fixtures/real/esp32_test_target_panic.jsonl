@@ -1,0 +1,3 @@
+{"type":"header","format":1,"pogo_version":"0.1.0","port":"/dev/cu.usbserial-57250046961","baud":115200}
+{"type":"tx","t_ms":229,"text":"panic\n"}
+{"type":"rx","t_ms":249,"text":"\u001b[31m\n\n====================== PANIC ======================\npanicked at src/main.rs:77:25:\ncalled `Option::unwrap()` on a `None` value\n\u001b[0m\n\nBacktrace:\n\n0x400d28cd\n0x400d28ae\n0x400d2896\n0x400d09c6\n0x400d2198\n0x4008067e\n\n\n\n"}

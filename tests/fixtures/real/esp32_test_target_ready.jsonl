@@ -1,0 +1,27 @@
+{"type":"header","format":1,"pogo_version":"0.1.0","port":"/dev/cu.usbserial-57250046961","baud":115200}
+{"type":"dtr","t_ms":0,"asserted":false}
+{"type":"rts","t_ms":0,"asserted":true}
+{"type":"rts","t_ms":105,"asserted":false}
+{"type":"rx","t_ms":112,"text":"ets Jul 29 2019 12:21:46\r\n\r\nrst:0x1 (POWERON_RESET),boot:0x13 (S"}
+{"type":"rx","t_ms":117,"text":"PI_FAST_FLASH_BOOT)\r\nconfigsip: 0, SPIWP:0xee\r\nclk_drv:0x00,q_dr"}
+{"type":"rx","t_ms":123,"text":"v:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00\r\nmode:DIO"}
+{"type":"rx","t_ms":128,"text":", clock div:2\r\nload:0x3fff0040,len:6072\r\nload:0x40078000,len:157"}
+{"type":"rx","t_ms":133,"text":"76\r\nload:0x40080400,len:3920\r\nentry 0x40080638\r\n"}
+{"type":"rx","t_ms":140,"text":"I (27) boot: ESP-IDF v6.1-829-g9a97f6c54ec 2nd stage bootloader\r"}
+{"type":"rx","t_ms":145,"text":"\nI (28) boot: chip revision: v3.1\r\nI (28) boot.esp32: SPI Speed "}
+{"type":"rx","t_ms":151,"text":"     : 40MHz\r\nI (29) boot.esp32: SPI Mode       : DIO\r\nI (33) bo"}
+{"type":"rx","t_ms":156,"text":"ot.esp32: SPI Flash Size : 4MB\r\nI (37) boot: Partition Table:\r\nI"}
+{"type":"rx","t_ms":162,"text":" (39) boot: ## Label            Usage          Type ST Offset   "}
+{"type":"rx","t_ms":168,"text":"Length\r\nI (46) boot:  0 nvs              WiFi data        01 02 "}
+{"type":"rx","t_ms":173,"text":"00009000 00006000\r\nI (52) boot:  1 phy_init         RF data     "}
+{"type":"rx","t_ms":179,"text":"     01 01 0000f000 00001000\r\nI (59) boot:  2 factory          f"}
+{"type":"rx","t_ms":184,"text":"actory app      00 00 00010000 003f0000\r\nI (65) esp_image: segme"}
+{"type":"rx","t_ms":190,"text":"nt 0: paddr=00010020 vaddr=3f400020 size=02318h (  8984) map\r\nI "}
+{"type":"rx","t_ms":195,"text":"(76) esp_image: segment 1: paddr=00012340 vaddr=3ffb0000 size=00"}
+{"type":"rx","t_ms":201,"text":"768h (  1896) load\r\nI (81) esp_image: segment 2: paddr=00012ab0 "}
+{"type":"rx","t_ms":207,"text":"vaddr=40080000 size=016e8h (  5864) load\r\nI (90) esp_image: segm"}
+{"type":"rx","t_ms":212,"text":"ent 3: paddr=000141a0 vaddr=00000000 size=0be78h ( 48760) \r\n"}
+{"type":"rx","t_ms":224,"text":"I (112) esp_image: segment 4: paddr=00020020 vaddr=400d0020 size"}
+{"type":"rx","t_ms":226,"text":"=063f0h ( 25584) map\r\n"}
+{"type":"rx","t_ms":234,"text":"I (122) boot: Loaded app from partition at offset 0x10000\r\n"}
+{"type":"rx","t_ms":245,"text":"\u001b[32mINFO - test-target 0.1.0\u001b[0m\nREADY\n"}

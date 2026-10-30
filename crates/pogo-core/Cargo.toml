@@ -7,8 +7,11 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+addr2line = "0.27.1"
 directories = "6.0.0"
+espflash = { version = "4.7.0", default-features = false, features = ["serialport"] }
 humantime = "2.4.0"
+object = "0.40.0"
 regex = "1.13.1"
 schemars = "1.2.3"
 serde = { version = "1.0.229", features = ["derive"] }

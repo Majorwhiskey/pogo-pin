@@ -1,0 +1,26 @@
+[package]
+name = "test-target"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "Fixture firmware for pogo's hardware tests (ESP32)"
+
+[dependencies]
+esp-hal = { version = "1.2.2", features = ["esp32", "unstable"] }
+esp-println = { version = "0.18.0", features = ["esp32", "log-04"] }
+esp-backtrace = { version = "0.20.0", features = ["esp32", "panic-handler", "println"] }
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32"] }
+log = "0.4"
+
+[profile.release]
+opt-level = "s"
+debug = 2
+codegen-units = 1
+lto = "fat"
+
+[profile.dev]
+opt-level = "s"
+
+# Builds for the ESP32, not the host: keep it out of the root workspace.
+[workspace]

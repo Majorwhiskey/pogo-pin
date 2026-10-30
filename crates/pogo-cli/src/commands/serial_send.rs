@@ -13,7 +13,7 @@ use pogo_core::transport::ReplayTransport;
 use pogo_core::{ErrorBody, ErrorCode};
 
 use crate::cli::{GlobalArgs, LineEnding};
-use crate::commands::serial::{outcome_error, stream_line};
+use crate::commands::serial::{outcome_error, stream_line, symbolize_panic};
 use crate::commands::target;
 use crate::interrupt::interrupt_flag;
 use crate::output::{Format, Render, Reply, Style};
@@ -83,12 +83,18 @@ pub fn send(global: &GlobalArgs, args: SendArgs, format: Format, style: &Style) 
         ),
     };
     match result {
-        Ok(data) => {
+        Ok(mut data) => {
+            let elf = target.elf(None);
+            let warning = data
+                .response
+                .as_mut()
+                .and_then(|r| symbolize_panic(r, elf.as_deref()));
             let err = data
                 .response
                 .as_ref()
                 .and_then(|r| outcome_error(r, &expect, timeout, None));
-            let reply = Reply::ok(&data, style);
+            let mut reply = Reply::ok(&data, style);
+            reply.warnings.extend(warning);
             match err {
                 Some(e) => reply.with_error(e),
                 None => reply,

@@ -1,0 +1,667 @@
+{
+  "$defs": {
+    "CaptureResult": {
+      "properties": {
+        "boot_count": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "fault": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Fault"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "line_count": {
+          "description": "Lines seen, including omitted ones. Line indexes count from 0 over all of them.",
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "lines": {
+          "items": {
+            "$ref": "#/$defs/LogLine"
+          },
+          "type": "array"
+        },
+        "matched": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PatternMatch"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "omitted_lines": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        },
+        "panic": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PanicReport"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resets": {
+          "items": {
+            "$ref": "#/$defs/ResetEvent"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "outcome",
+        "line_count",
+        "omitted_lines",
+        "boot_count",
+        "resets",
+        "lines"
+      ],
+      "type": "object"
+    },
+    "ErrorBody": {
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ErrorCode"
+        },
+        "details": true,
+        "hint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    },
+    "ErrorCode": {
+      "description": "Stable machine-readable error code. Serialized as `SCREAMING_SNAKE_CASE`.\n\nChanging a code's name or exit code is a breaking change to the agent contract.",
+      "enum": [
+        "INTERNAL",
+        "NOT_IMPLEMENTED",
+        "USAGE",
+        "DEVICE_NOT_FOUND",
+        "AMBIGUOUS_DEVICE",
+        "TIMEOUT",
+        "PERMISSION_DENIED",
+        "DEVICE_IO",
+        "PROTOCOL",
+        "PROTOCOL_MISMATCH",
+        "TARGET_FAULT",
+        "GUARDRAIL_REFUSED",
+        "DEVICE_BUSY",
+        "CONFIG_INVALID",
+        "INTERRUPTED"
+      ],
+      "type": "string"
+    },
+    "Fault": {
+      "description": "What turned the outcome into `fault`.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/FaultKind"
+        },
+        "line_index": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "pattern": {
+          "description": "The fail-on pattern that matched, if any.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "t_ms": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "line_index",
+        "t_ms"
+      ],
+      "type": "object"
+    },
+    "FaultKind": {
+      "enum": [
+        "fail_on",
+        "panic",
+        "unexpected_reboot"
+      ],
+      "type": "string"
+    },
+    "FlashPlan": {
+      "description": "`--dry-run` output: the request after guardrail checks, without touching the device.",
+      "properties": {
+        "address": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "erase_all": {
+          "type": "boolean"
+        },
+        "image": {
+          "description": "`elf` or `bin`.",
+          "type": "string"
+        },
+        "reset_after": {
+          "type": "boolean"
+        },
+        "verify": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "image",
+        "bytes",
+        "erase_all",
+        "verify",
+        "reset_after"
+      ],
+      "type": "object"
+    },
+    "FlashReport": {
+      "properties": {
+        "chip": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "erased_all": {
+          "type": "boolean"
+        },
+        "flash_size_bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "type": "array"
+        },
+        "reset_after": {
+          "type": "boolean"
+        },
+        "verified": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "chip",
+        "regions",
+        "erased_all",
+        "verified",
+        "reset_after",
+        "duration_ms"
+      ],
+      "type": "object"
+    },
+    "Frame": {
+      "properties": {
+        "address": {
+          "description": "The backtrace address this frame came from, e.g. `0x400d28cd`.",
+          "type": "string"
+        },
+        "file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "function": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "inlined": {
+          "description": "Code inlined into the next frame of the same address.",
+          "type": "boolean"
+        },
+        "line": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "address",
+        "inlined"
+      ],
+      "type": "object"
+    },
+    "Level": {
+      "oneOf": [
+        {
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "trace",
+          "description": "ESP-IDF `V` (verbose) and Rust `TRACE`.",
+          "type": "string"
+        }
+      ]
+    },
+    "LogLine": {
+      "description": "One decoded line in a capture's `data.lines`.",
+      "properties": {
+        "device_ts_ms": {
+          "description": "Timestamp printed by the device, if the parser found one.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Level"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "t_ms": {
+          "description": "Host time the line's first byte arrived, from the start of the capture.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "tag": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "truncated": {
+          "description": "The line was cut at `--max-line-len`. Omitted when false.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "t_ms",
+        "text"
+      ],
+      "type": "object"
+    },
+    "Outcome": {
+      "oneOf": [
+        {
+          "enum": [
+            "matched",
+            "completed",
+            "fault",
+            "timeout",
+            "eof"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "interrupted",
+          "description": "Stopped by Ctrl-C or SIGTERM; the data is partial.",
+          "type": "string"
+        }
+      ]
+    },
+    "PanicLocation": {
+      "properties": {
+        "column": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "file": {
+          "type": "string"
+        },
+        "line": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "file",
+        "line"
+      ],
+      "type": "object"
+    },
+    "PanicReport": {
+      "properties": {
+        "backtrace": {
+          "description": "Program counters from the backtrace, e.g. `0x42001234`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "frames": {
+          "description": "`backtrace` resolved against the ELF (`--elf` or the config's `elf`); empty without.",
+          "items": {
+            "$ref": "#/$defs/Frame"
+          },
+          "type": "array"
+        },
+        "line_index": {
+          "description": "Index (in the whole capture) of the line that started the panic block.",
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PanicLocation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Parsed from a Rust `panicked at file:line:col` message; no ELF needed."
+        },
+        "message": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "line_index",
+        "backtrace",
+        "frames"
+      ],
+      "type": "object"
+    },
+    "PatternMatch": {
+      "properties": {
+        "line_index": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "t_ms": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "pattern",
+        "line_index",
+        "t_ms"
+      ],
+      "type": "object"
+    },
+    "Region": {
+      "properties": {
+        "address": {
+          "description": "Hex, e.g. `0x10000`.",
+          "type": "string"
+        },
+        "bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "kind": {
+          "$ref": "#/$defs/RegionKind"
+        }
+      },
+      "required": [
+        "address",
+        "bytes",
+        "kind"
+      ],
+      "type": "object"
+    },
+    "RegionKind": {
+      "oneOf": [
+        {
+          "enum": [
+            "bootloader",
+            "partition_table",
+            "app"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "raw",
+          "description": "A raw `.bin` written where the caller asked.",
+          "type": "string"
+        }
+      ]
+    },
+    "ResetEvent": {
+      "description": "A boot seen in the log, from the ROM's `rst:0x.. (REASON)` line.",
+      "properties": {
+        "code": {
+          "description": "Reset cause register value, e.g. `0x1`.",
+          "type": "string"
+        },
+        "reason": {
+          "description": "ROM's name for it, e.g. `POWERON`, `TG0WDT_SYS_RST`, `RTCWDT_BROWN_OUT_RESET`.",
+          "type": "string"
+        },
+        "t_ms": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "t_ms",
+        "code",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "ResolvedDevice": {
+      "description": "The device a command acted on, echoed as `data.device`.",
+      "properties": {
+        "alias": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port": {
+          "type": "string"
+        },
+        "usb_serial": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "type": "object"
+    },
+    "RunData": {
+      "properties": {
+        "capture": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaptureResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`null` with `--dry-run`."
+        },
+        "device": {
+          "$ref": "#/$defs/ResolvedDevice"
+        },
+        "flash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlashReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`null` with `--no-flash`."
+        },
+        "plan": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlashPlan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`null` unless `--dry-run`."
+        }
+      },
+      "required": [
+        "device"
+      ],
+      "type": "object"
+    },
+    "Warning": {
+      "description": "Something worth knowing that did not cause the command to fail.",
+      "properties": {
+        "code": {
+          "description": "Stable `SCREAMING_SNAKE_CASE` code, e.g. `OUTPUT_TRUNCATED`.",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "command": {
+      "description": "Dotted command name, e.g. `serial.capture`.",
+      "type": "string"
+    },
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RunData"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Command-specific result. May be present even when `ok` is false (partial results)."
+    },
+    "duration_ms": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ErrorBody"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ok": {
+      "description": "`true` only when the exit code is 0.",
+      "type": "boolean"
+    },
+    "pogo_version": {
+      "type": "string"
+    },
+    "schema_version": {
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/Warning"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "pogo_version",
+    "command",
+    "ok",
+    "duration_ms",
+    "warnings"
+  ],
+  "title": "pogo run envelope",
+  "type": "object"
+}

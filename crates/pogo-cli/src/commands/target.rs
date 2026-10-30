@@ -7,6 +7,8 @@ use pogo_core::discovery::{self, DeviceKind, ResolvedDevice};
 use pogo_core::lock::{self, DeviceLock};
 use pogo_core::serial::detect::DEFAULT_FAIL_ON;
 
+use pogo_core::{ErrorBody, ErrorCode};
+
 use crate::cli::GlobalArgs;
 use crate::commands::config::search;
 use crate::output::Reply;
@@ -23,8 +25,27 @@ pub struct Target {
 }
 
 impl Target {
+    /// POGO_REPLAY stands in for serial I/O only; flashing needs a real device.
+    pub fn require_hardware(&self) -> Result<(), Box<Reply>> {
+        match &self.replay {
+            None => Ok(()),
+            Some(_) => Err(Box::new(Reply::error(ErrorBody::new(
+                ErrorCode::Usage,
+                "POGO_REPLAY only supports serial capture and serial send",
+            )))),
+        }
+    }
+
     pub fn baud(&self, flag: Option<u32>) -> u32 {
         flag.or(self.config.defaults.baud).unwrap_or(DEFAULT_BAUD)
+    }
+
+    /// `--elf`, else the config's `elf` for the device's alias.
+    pub fn elf(&self, flag: Option<&std::path::Path>) -> Option<PathBuf> {
+        flag.map(PathBuf::from).or_else(|| {
+            let alias = self.device.alias.as_ref()?;
+            self.config.devices.get(alias)?.elf.clone()
+        })
     }
 
     /// Built-in fail-on patterns (unless disabled), then the config's, then the flags'.

@@ -7,18 +7,19 @@ use pogo_core::config::ParserName;
 use pogo_core::deadline::Deadline;
 use pogo_core::serial::capture::{CaptureOptions, CaptureResult, FaultKind, Outcome};
 use pogo_core::serial::session::{
-    SerialCaptureData, SessionOptions, capture_device, capture_on, compile_patterns,
+    SerialCaptureData, SessionOptions, SessionOutput, capture_device, capture_on, compile_patterns,
 };
 use pogo_core::serial::{DecodeOptions, LogLine};
+use pogo_core::symbolize;
 use pogo_core::transport::ReplayTransport;
-use pogo_core::{ErrorBody, ErrorCode};
+use pogo_core::{ErrorBody, ErrorCode, Warning};
 
 use crate::cli::{CaptureArgs, GlobalArgs, LogParser};
-use crate::commands::target;
+use crate::commands::target::{self, Target};
 use crate::interrupt::interrupt_flag;
 use crate::output::{Format, Render, Reply, Style};
 
-const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
+pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub fn capture(
     global: &GlobalArgs,
@@ -27,37 +28,67 @@ pub fn capture(
     format: Format,
     style: &Style,
 ) -> Reply {
-    let timeout = global.timeout.unwrap_or(DEFAULT_TIMEOUT);
-    // Bad patterns are usage errors, reported before any device is touched.
-    let until = match compile_patterns(&args.until, "--until")
-        .and_then(|u| compile_patterns(&args.fail_on, "--fail-on").map(|_| u))
-    {
-        Ok(u) => u,
-        Err(msg) => return Reply::error(ErrorBody::new(ErrorCode::Usage, msg)),
-    };
+    if let Err(reply) = check_patterns(args) {
+        return *reply;
+    }
     let target = match target::acquire(global, "serial.capture") {
         Ok(t) => t,
         Err(reply) => return *reply,
     };
-    // --timeout covers the capture itself; time spent in --wait-lock is not charged to it.
-    let deadline = Deadline::after(timeout);
-    let fail_on = target.fail_on(!args.no_default_fail_patterns, &args.fail_on);
-    let fail_on = match compile_patterns(&fail_on, "--fail-on") {
-        Ok(f) => f,
-        Err(msg) => return Reply::error(ErrorBody::new(ErrorCode::Usage, msg)),
-    };
+    let timeout = global.timeout.unwrap_or(DEFAULT_TIMEOUT);
+    match capture_locked(&target, args, reset, format, timeout) {
+        Ok(done) => {
+            let mut reply = Reply::ok(&done.out.data, style);
+            reply.warnings = done.out.warnings;
+            match outcome_error(&done.out.data.capture, &args.until, timeout, done.reconnect) {
+                Some(err) => reply.with_error(err),
+                None => reply,
+            }
+        }
+        Err(reply) => *reply,
+    }
+}
 
+/// Bad patterns are usage errors, reported before any device is touched.
+pub fn check_patterns(args: &CaptureArgs) -> Result<(), Box<Reply>> {
+    compile_patterns(&args.until, "--until")
+        .and_then(|_| compile_patterns(&args.fail_on, "--fail-on"))
+        .map(|_| ())
+        .map_err(|msg| Box::new(Reply::error(ErrorBody::new(ErrorCode::Usage, msg))))
+}
+
+pub struct CaptureDone {
+    pub out: SessionOutput,
+    /// How long a vanished device was waited for, when reconnecting applied.
+    pub reconnect: Option<Duration>,
+}
+
+/// Capture from a locked target; shared by `serial capture` and `run`. `--timeout`
+/// starts here, so time spent waiting for the lock is not charged to it.
+pub fn capture_locked(
+    target: &Target,
+    args: &CaptureArgs,
+    reset: bool,
+    format: Format,
+    timeout: Duration,
+) -> Result<CaptureDone, Box<Reply>> {
+    let usage = |msg: String| Box::new(Reply::error(ErrorBody::new(ErrorCode::Usage, msg)));
+    let deadline = Deadline::after(timeout);
+    let until = compile_patterns(&args.until, "--until").map_err(usage)?;
+    let fail_on = target.fail_on(!args.no_default_fail_patterns, &args.fail_on);
+    let fail_on = compile_patterns(&fail_on, "--fail-on").map_err(usage)?;
     let record: Option<Box<dyn Write + Send>> = match &args.record {
         None => None,
-        Some(path) => match std::fs::File::create(path) {
-            Ok(f) => Some(Box::new(std::io::BufWriter::new(f))),
-            Err(e) => {
-                let msg = format!("cannot create --record file {}: {e}", path.display());
-                return Reply::error(ErrorBody::new(ErrorCode::Usage, msg));
-            }
-        },
+        Some(path) => {
+            let f = std::fs::File::create(path).map_err(|e| {
+                usage(format!(
+                    "cannot create --record file {}: {e}",
+                    path.display()
+                ))
+            })?;
+            Some(Box::new(std::io::BufWriter::new(f)))
+        }
     };
-
     let opts = CaptureOptions {
         until,
         fail_on,
@@ -88,17 +119,25 @@ pub fn capture(
             .and_then(|t| capture_on(t, device, session, &opts, deadline, &mut stream)),
         None => capture_device(device, session, &opts, deadline, &mut stream),
     };
-    match result {
-        Ok(out) => {
-            let mut reply = Reply::ok(&out.data, style);
-            reply.warnings = out.warnings;
-            match outcome_error(&out.data.capture, &args.until, timeout, reconnect) {
-                Some(err) => reply.with_error(err),
-                None => reply,
-            }
-        }
-        Err(e) => Reply::error(&e),
+    let mut out = result.map_err(|e| Box::new(Reply::error(&e)))?;
+    let elf = target.elf(args.elf.as_deref());
+    out.warnings
+        .extend(symbolize_panic(&mut out.data.capture, elf.as_deref()));
+    Ok(CaptureDone { out, reconnect })
+}
+
+/// Resolve a panic's backtrace against the ELF, if there is one. Failure is a warning:
+/// the capture itself succeeded.
+pub fn symbolize_panic(c: &mut CaptureResult, elf: Option<&std::path::Path>) -> Option<Warning> {
+    let (Some(panic), Some(elf)) = (c.panic.as_mut(), elf) else {
+        return None;
+    };
+    if panic.backtrace.is_empty() {
+        return None;
     }
+    symbolize::annotate(panic, elf)
+        .err()
+        .map(|e| Warning::new("SYMBOLIZE_FAILED", e))
 }
 
 /// Lines go out as they arrive: plain text in human mode, `line` events in jsonl.

@@ -27,7 +27,7 @@ fn json(stdout: &[u8]) -> Value {
 #[test]
 fn not_implemented_json_envelope_exits_1() {
     let out = pogo()
-        .args(["info", "-f", "json"])
+        .args(["probe", "selftest", "-f", "json"])
         .assert()
         .code(1)
         .get_output()
@@ -39,7 +39,7 @@ fn not_implemented_json_envelope_exits_1() {
     );
     let v = json(&out.stdout);
     assert_eq!(v["schema_version"], 1);
-    assert_eq!(v["command"], "info");
+    assert_eq!(v["command"], "probe.selftest");
     assert_eq!(v["ok"], false);
     assert_eq!(v["data"], Value::Null);
     assert_eq!(v["error"]["code"], "NOT_IMPLEMENTED");
@@ -74,11 +74,16 @@ fn format_from_env() {
 
 #[test]
 fn human_error_goes_to_stderr_only() {
-    let out = pogo().arg("info").assert().code(1).get_output().clone();
+    let out = pogo()
+        .args(["probe", "selftest"])
+        .assert()
+        .code(1)
+        .get_output()
+        .clone();
     assert!(out.stdout.is_empty());
     let stderr = String::from_utf8(out.stderr).unwrap();
     assert!(
-        stderr.starts_with("error[NOT_IMPLEMENTED]: not implemented yet: info"),
+        stderr.starts_with("error[NOT_IMPLEMENTED]: not implemented yet: probe.selftest"),
         "{stderr}"
     );
     assert!(stderr.contains("hint:"));
