@@ -188,6 +188,12 @@ Task watchdog got triggered
 }
 ```
 
+**Reconnect:** if the device disappears mid-capture (native USB boards re-enumerate on reset), it is re-found by USB serial number and reopened, and the capture continues. `--reconnect-timeout` (default `5s`, `0` disables) bounds the wait; after that the outcome is `eof`. Devices without a USB serial number are not reconnected.
+
+**Ctrl-C / SIGTERM:** the capture stops, the device lock is released, and the partial envelope is printed with outcome `interrupted`, error `INTERRUPTED`, and exit 130. A second Ctrl-C exits immediately.
+
+Additional fields: `device` also carries `port`; `fault` is `{ kind: fail_on|panic|unexpected_reboot, pattern, line_index, t_ms }` when the outcome is `fault` (otherwise `null`); a line cut at `--max-line-len` carries `"truncated": true`. `--reset` toggles DTR/RTS following esptool's hard-reset sequence (not yet verified on the bench boards). Without `--reset`, boots are counted but never treated as unexpected. In human mode lines stream to stdout as they arrive, followed by a one-line summary; in `jsonl` mode each line is a `{"type":"line", ...}` event.
+
 `--record <FILE>` saves the raw byte stream with timestamps as JSONL, which is useful for bug reports and for test fixtures ([§12](testing.md#12-testing-strategy)).
 
 ## 7.7 `pogo serial send`
@@ -198,6 +204,13 @@ pogo serial send <DATA | -> [--line-ending lf|crlf|none] [--hex]
 ```
 
 Writes data (default line ending `lf`; `--hex` accepts `"de ad be ef"`; `-` reads from stdin). With `--expect`, it then runs the capture engine until the pattern matches, inheriting fail-on detection. Output includes `bytes_written` and the response capture.
+
+```json
+"data": { "device": { "alias": null, "port": "/dev/cu.usbserial-0001", "usb_serial": "0001" },
+          "bytes_written": 5, "response": { "outcome": "matched", ... } }
+```
+
+`response` has the same shape as `serial capture`'s data (without `device`) and is `null` without `--expect`. The line ending is appended to `--hex` and stdin data too; pass `--line-ending none` to avoid it. Default fail-on patterns and the config's `extra_fail_on` apply to the response.
 
 ## 7.8 `pogo run` (the main agent command)
 

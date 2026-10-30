@@ -6,7 +6,7 @@ MCP server for ESP32 boards. README.md and docs/ are the spec. docs/agent-contra
 docs/guardrails.md (§11) are non-negotiable.
 
 ## Current phase
-Phase 1: Serial (Phase 0 done 2026-10-30; update this line as phases complete)
+Phase 2: Flash, reset, run, symbolization (Phase 0 and Phase 1 done 2026-10-30; update this line as phases complete)
 
 ## Bench
 - Host: macOS (Apple Silicon). Use /dev/cu.* ports.

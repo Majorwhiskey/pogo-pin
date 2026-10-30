@@ -57,9 +57,16 @@ fn all_to_stdout_and_to_dir_match_committed() {
     let names = keys(&all);
     assert_eq!(
         names,
-        ["config.path", "config.show", "config.validate", "devices"]
-            .map(String::from)
-            .into()
+        [
+            "config.path",
+            "config.show",
+            "config.validate",
+            "devices",
+            "serial.capture",
+            "serial.send",
+        ]
+        .map(String::from)
+        .into()
     );
 
     let dir = std::env::temp_dir().join(format!("pogo-schemas-{}", std::process::id()));

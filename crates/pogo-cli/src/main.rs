@@ -1,6 +1,7 @@
 mod cli;
 mod commands;
 mod help;
+mod interrupt;
 mod output;
 
 use std::ffi::OsString;
@@ -11,7 +12,7 @@ use std::time::Instant;
 use clap::{CommandFactory, Parser};
 use pogo_core::{ErrorBody, ErrorCode, PogoError};
 
-use crate::cli::{Cli, Command};
+use crate::cli::{Cli, Command, SerialCommand};
 use crate::output::{Format, Printer, Reply, Style};
 
 fn main() -> ExitCode {
@@ -33,13 +34,32 @@ fn main() -> ExitCode {
         quiet: cli.global.quiet,
     };
     let command = cli.command.name();
-    let reply = dispatch(cli, &style);
+    let reply = dispatch(cli, format, &style);
     let code = printer.finish(command, elapsed_ms(start), reply);
     ExitCode::from(code)
 }
 
-fn dispatch(cli: Cli, style: &Style) -> Reply {
+fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
     match cli.command {
+        Command::Serial(SerialCommand::Capture { reset, capture }) => {
+            commands::serial::capture(&cli.global, reset, &capture, format, style)
+        }
+        Command::Serial(SerialCommand::Send {
+            data,
+            line_ending,
+            hex,
+            expect,
+        }) => commands::serial_send::send(
+            &cli.global,
+            commands::serial_send::SendArgs {
+                data: &data,
+                line_ending,
+                hex,
+                expect: expect.as_deref(),
+            },
+            format,
+            style,
+        ),
         Command::Devices { all } => commands::devices::run(all, cli.global.config, style),
         Command::Config(cmd) => commands::config::run(&cmd, cli.global.config, style),
         Command::Schema { command, out, .. } => {

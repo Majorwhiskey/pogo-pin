@@ -1,7 +1,10 @@
 //! USB enumeration and device classification. Never opens ports.
 
+mod resolve;
 #[cfg(test)]
 mod tests;
+
+pub use resolve::{ResolvedDevice, resolve};
 
 use schemars::JsonSchema;
 use serde::Serialize;

@@ -93,7 +93,7 @@ Examples:
 Exit codes: 0 matched (or completed with no --until), 4 timeout, 6 device vanished (eof),
 7 target fault, 9 device busy
 
-JSON data: { device, outcome: matched|completed|fault|timeout|eof, matched, line_count,
+JSON data: { device, outcome: matched|completed|fault|timeout|eof, matched, fault, line_count,
 omitted_lines, boot_count, resets, panic, lines: [ { t_ms, level, tag, device_ts_ms, text } ] }";
 
 pub const SERIAL_SEND: &str = "\

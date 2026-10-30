@@ -114,7 +114,7 @@ A selector can be a config alias (`target`), a USB serial number, a port path, o
 
 ## 6.8 Concurrency
 
-Each device has a lock file in the runtime directory, keyed by USB serial number (or port path as a fallback). Commands hold the lock for their whole duration. If it's taken, the command fails immediately with `DEVICE_BUSY` (including the holder's PID and command), unless `--wait-lock <duration>` is passed.
+Each device has a lock file in the runtime directory, keyed by USB serial number (or port path as a fallback). Commands hold the lock for their whole duration. If it's taken, the command fails immediately with `DEVICE_BUSY` (including the holder's PID and command), unless `--wait-lock <duration>` is passed. Time spent waiting for the lock is not charged to `--timeout`, which starts once the device is locked. Locks are OS file locks in the runtime directory (or the per-user temp directory where there is none), so they are released even if `pogo` crashes.
 
 ## 6.9 Units and naming
 

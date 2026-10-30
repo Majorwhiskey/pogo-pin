@@ -1,0 +1,18 @@
+{"type":"header","format":1,"pogo_version":"0.1.0","port":"/dev/cu.usbmodem1101","baud":115200}
+{"type":"rx","t_ms":0,"text":"ESP-ROM:esp32c3-api1-20210207\r\n"}
+{"type":"rx","t_ms":7,"text":"Build:Feb  7 2021\r\n"}
+{"type":"rx","t_ms":14,"text":"rst:0x1 (POWERON),boot:0xc (SPI_FAST_FLASH_BOOT)\r\n"}
+{"type":"rx","t_ms":21,"text":"SPIWP:0xee\r\n"}
+{"type":"rx","t_ms":28,"text":"mode:DIO, clock div:1\r\n"}
+{"type":"rx","t_ms":35,"text":"entry 0x403cc710\r\n"}
+{"type":"rx","t_ms":42,"text":"\u001b[0;32mI (24) boot: ESP-IDF v5.1 2nd stage bootloader\u001b[0m\r\n"}
+{"type":"rx","t_ms":49,"text":"\u001b[0;32mI (31) boot: chip revision: v0.4\u001b[0m\r\n"}
+{"type":"rx","t_ms":56,"text":"Guru Meditation Error: Core  0 panic'ed (Load access fault). Exception was unhandled.\r\n"}
+{"type":"rx","t_ms":63,"text":"\r\n"}
+{"type":"rx","t_ms":70,"text":"Core  0 register dump:\r\n"}
+{"type":"rx","t_ms":77,"text":"MEPC    : 0x4200a1b2  RA      : 0x4200a19c  SP      : 0x3fc8f0e0\r\n"}
+{"type":"rx","t_ms":84,"text":"\r\n"}
+{"type":"rx","t_ms":91,"text":"Backtrace: 0x4200a1b2:0x3fc8f0e0 0x4200a19c:0x3fc8f100 0x40385a2e:0x3fc8f120\r\n"}
+{"type":"rx","t_ms":98,"text":"\r\n"}
+{"type":"rx","t_ms":105,"text":"ELF file SHA256: 6f2b8a1c\r\n"}
+{"type":"rx","t_ms":112,"text":"rst:0xc (RTC_SW_CPU_RST),boot:0xc (SPI_FAST_FLASH_BOOT)\r\n"}

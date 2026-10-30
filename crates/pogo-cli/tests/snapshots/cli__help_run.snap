@@ -78,6 +78,11 @@ Options:
       --raw
           Keep ANSI escape codes
 
+      --reconnect-timeout <DURATION>
+          How long to wait for a vanished device to reappear (USB re-enumeration); 0 disables
+          
+          [default: 5s]
+
       --record <FILE>
           Save the raw byte stream with timestamps as JSONL
 

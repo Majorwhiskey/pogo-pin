@@ -1,0 +1,7 @@
+{"type":"header","format":1,"pogo_version":"0.1.0","port":"/dev/cu.usbmodem1101","baud":115200}
+{"type":"rx","t_ms":0,"text":"ESP-ROM:esp32c3-api1-20210207\r\n"}
+{"type":"rx","t_ms":7,"text":"Build:Feb  7 2021\r\n"}
+{"type":"rx","t_ms":14,"text":"rst:0x1 (POWERON),boot:0xc (SPI_FAST_FLASH_BOOT)\r\n"}
+{"type":"rx","t_ms":21,"text":"SPIWP:0xee\r\n"}
+{"type":"rx","t_ms":28,"text":"load:0x3fcd5820,len:0x17"}
+{"type":"disconnect","t_ms":35}

@@ -75,6 +75,9 @@ pub struct CaptureArgs {
     /// Keep ANSI escape codes
     #[arg(long)]
     pub raw: bool,
+    /// How long to wait for a vanished device to reappear (USB re-enumeration); 0 disables
+    #[arg(long, value_name = "DURATION", value_parser = parse_duration, default_value = "5s")]
+    pub reconnect_timeout: Duration,
     /// Save the raw byte stream with timestamps as JSONL
     #[arg(long, value_name = "FILE")]
     pub record: Option<PathBuf>,

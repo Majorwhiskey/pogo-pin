@@ -1,0 +1,6 @@
+---
+source: crates/pogo-cli/tests/capture.rs
+expression: "String::from_utf8(out.stderr).unwrap()"
+---
+error[TARGET_FAULT]: line 9 matched fail-on pattern 'Brownout detector was triggered'
+  hint: See data.lines around line 9.

@@ -1,0 +1,21 @@
+{"type":"header","format":1,"pogo_version":"0.1.0","port":"/dev/cu.usbserial-57250046961","baud":115200}
+{"type":"dtr","t_ms":0,"asserted":false}
+{"type":"rts","t_ms":0,"asserted":true}
+{"type":"rts","t_ms":105,"asserted":false}
+{"type":"rx","t_ms":112,"text":"ets Jul 29 2019 12:21:46\r\n\r\nrst:0x1 (POWERON_RESET),boot:0x13 (S"}
+{"type":"rx","t_ms":117,"text":"PI_FAST_FLASH_BOOT)\r\nconfigsip: 0, SPIWP:0xee\r\nclk_drv:0x00,q_dr"}
+{"type":"rx","t_ms":123,"text":"v:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00\r\nmode:DIO"}
+{"type":"rx","t_ms":128,"text":", clock div:1\r\nload:0x3fff0030,len:4876\r\nho 0 tail 12 room 4\r\nlo"}
+{"type":"rx","t_ms":134,"text":"ad:0x40078000,len:16560\r\nload:0x40080400,len:3500\r\nentry 0x40080"}
+{"type":"rx","t_ms":135,"text":"5b4\r\n"}
+{"type":"rx","t_ms":578,"hex":"1e29ef4c1668802804e02e278c26725216bc1825f6283d2c06292d8c16600ef7400ea0100fe41e3a09233c30338c1037080fa4283ee428092ea69c9c9c3c6494"}
+{"type":"rx","t_ms":581,"hex":"c23f24c22e64097994335e9c036c0e9c4238c24e842f6cfc"}
+{"type":"rx","t_ms":632,"hex":"10261928a7cc2e730c296f4cff"}
+{"type":"rx","t_ms":683,"hex":"1037800e241c1c740c146c08ea"}
+{"type":"rx","t_ms":740,"hex":"7b20085e5c74392918b404403e7c463a709400bf8c3e64392c5410091a6c9c2c74581c9c823a68c65c5c143869041438387128309404841c0c74940f64c4040c"}
+{"type":"rx","t_ms":748,"hex":"74080f7939090c74383a64c4392c54408c4e9c943868ec3ef0823e7438468404093e6c093967426b3844393ee40977c68c3a6c040c740c04393e7438943a6c040c"}
+{"type":"rx","t_ms":751,"hex":"749c942e648c4a3ee484089c39af0c6e441c2c6c38ff"}
+{"type":"rx","t_ms":2754,"hex":"24461a308c2a7900029484292c6c9c1e7ccc8c2c54"}
+{"type":"rx","t_ms":2781,"hex":"7c383d823ce074841fa4"}
+{"type":"rx","t_ms":3781,"hex":"ec088419ca46ff"}
+{"type":"rx","t_ms":4754,"hex":"3eb43690ff"}

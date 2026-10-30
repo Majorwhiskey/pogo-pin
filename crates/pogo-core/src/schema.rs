@@ -6,15 +6,25 @@ use serde_json::Value;
 use crate::config::{ConfigPathResult, ConfigShowResult, ConfigValidateResult};
 use crate::discovery::DevicesResult;
 use crate::envelope::Envelope;
+use crate::serial::send::SerialSendData;
+use crate::serial::session::SerialCaptureData;
 
 /// Commands whose `data` shape is defined, in the order `schema --all` emits them.
-pub const COMMANDS_WITH_SCHEMA: &[&str] =
-    &["devices", "config.show", "config.path", "config.validate"];
+pub const COMMANDS_WITH_SCHEMA: &[&str] = &[
+    "devices",
+    "serial.capture",
+    "serial.send",
+    "config.show",
+    "config.path",
+    "config.validate",
+];
 
 /// The JSON Schema for `command`'s envelope, or `None` if it has no defined data shape.
 pub fn envelope_schema(command: &str) -> Option<Value> {
     let mut schema = match command {
         "devices" => schema_for!(Envelope<DevicesResult>),
+        "serial.capture" => schema_for!(Envelope<SerialCaptureData>),
+        "serial.send" => schema_for!(Envelope<SerialSendData>),
         "config.show" => schema_for!(Envelope<ConfigShowResult>),
         "config.path" => schema_for!(Envelope<ConfigPathResult>),
         "config.validate" => schema_for!(Envelope<ConfigValidateResult>),

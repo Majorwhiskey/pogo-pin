@@ -35,6 +35,12 @@ impl Reply {
         }
     }
 
+    /// Keep the data (partial results) and mark the command as failed.
+    pub fn with_error(mut self, error: impl Into<ErrorBody>) -> Self {
+        self.error = Some(error.into());
+        self
+    }
+
     pub fn error(error: impl Into<ErrorBody>) -> Self {
         Reply {
             data: None,

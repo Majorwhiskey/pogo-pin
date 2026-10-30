@@ -16,13 +16,13 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 
 ## Phase 1: Serial
 
-- [ ] `Transport` trait with serial, mock, and replay implementations
-- [ ] Line splitter, ANSI stripping, `esp-idf` and `rust-log` parsers
-- [ ] Capture engine: `--until`, `--fail-on`, defaults, `--settle`, `--max-lines`, boot counting, reset reasons, panic block detection
-- [ ] `serial capture`, `serial send`, `--record`
-- [ ] Lock files, `DEVICE_BUSY`, `--wait-lock`
-- [ ] Reconnect by USB serial after re-enumeration
-- [ ] Ctrl-C handling with partial results
+- [x] `Transport` trait with serial, mock, and replay implementations
+- [x] Line splitter, ANSI stripping, `esp-idf` and `rust-log` parsers
+- [x] Capture engine: `--until`, `--fail-on`, defaults, `--settle`, `--max-lines`, boot counting, reset reasons, panic block detection
+- [x] `serial capture`, `serial send`, `--record`
+- [x] Lock files, `DEVICE_BUSY`, `--wait-lock`
+- [x] Reconnect by USB serial after re-enumeration
+- [x] Ctrl-C handling with partial results
 
 **Acceptance:** all required fixtures ([§12](testing.md#12-testing-strategy)) replay with the correct outcome and exit code. On real hardware, `serial capture --reset --until "rst:0x"` exits 0. Unplugging the board mid-capture returns `DEVICE_IO` with a hint instead of hanging.
 

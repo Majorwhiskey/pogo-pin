@@ -50,12 +50,12 @@ fn not_implemented_json_envelope_exits_1() {
 #[test]
 fn dotted_command_names() {
     let out = pogo()
-        .args(["serial", "capture", "--format=json"])
+        .args(["i2c", "scan", "--format=json"])
         .assert()
         .code(1)
         .get_output()
         .clone();
-    assert_eq!(json(&out.stdout)["command"], "serial.capture");
+    assert_eq!(json(&out.stdout)["command"], "i2c.scan");
 }
 
 #[test]
