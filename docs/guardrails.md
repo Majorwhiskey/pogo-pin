@@ -13,6 +13,6 @@
 
 **`--dry-run`:** every mutating command supports it and returns the planned actions in `data.plan` without touching hardware.
 
-**Audit log:** every mutating action is appended as JSONL to the platform state directory (for example `~/.local/state/pogo/audit.jsonl`) with timestamp, command, device serial, arguments, and result. This gives a human a clear record of what an agent did to their hardware.
+**Audit log:** every mutating action is appended as JSONL to the platform state directory (for example `~/.local/state/pogo/audit.jsonl`) with timestamp, command, device serial, arguments, and result. Each line is `{ ts_unix_ms, command, port, usb_serial, args, result }`, where `result` is `ok` or the error code. On macOS and Windows, where there is no state directory, the log lives in the local data directory (`~/Library/Application Support/pogo/audit.jsonl` on macOS). `flash`, `reset`, and `serial send` are logged; `serial send` records the payload size, not its contents, since it may carry credentials. This gives a human a clear record of what an agent did to their hardware.
 
 [Back to README](../README.md)

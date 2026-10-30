@@ -56,3 +56,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: EmbarkStudios/cargo-deny-action@v2.1.1
+
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: esp-rs/xtensa-toolchain@v1.7.0
+        with:
+          buildtargets: esp32
+          version: 1.97.0.0
+      - uses: Swatinem/rust-cache@v2.9.3
+        with:
+          workspaces: firmware/test-target
+      - name: Build test-target firmware (ESP32)
+        working-directory: firmware/test-target
+        run: cargo build --release

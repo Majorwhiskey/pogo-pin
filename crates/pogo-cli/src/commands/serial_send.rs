@@ -3,6 +3,7 @@
 use std::io::Read;
 use std::time::Duration;
 
+use pogo_core::audit::{self, AuditEntry};
 use pogo_core::config::ParserName;
 use pogo_core::deadline::Deadline;
 use pogo_core::serial::capture::CaptureOptions;
@@ -10,7 +11,7 @@ use pogo_core::serial::send::{SerialSendData, parse_hex, send_device, send_on};
 use pogo_core::serial::session::compile_patterns;
 use pogo_core::serial::{DecodeOptions, LogLine};
 use pogo_core::transport::ReplayTransport;
-use pogo_core::{ErrorBody, ErrorCode};
+use pogo_core::{ErrorBody, ErrorCode, Warning};
 
 use crate::cli::{GlobalArgs, LineEnding};
 use crate::commands::serial::{outcome_error, stream_line, symbolize_panic};
@@ -82,6 +83,25 @@ pub fn send(global: &GlobalArgs, args: SendArgs, format: Format, style: &Style) 
             &mut stream,
         ),
     };
+    let audit_warning = target.replay.is_none().then(|| {
+        let outcome = match &result {
+            Ok(_) => "ok",
+            Err(e) => e.code().as_str(),
+        };
+        // Log the payload size, not its contents: it may hold credentials.
+        let args = serde_json::json!({ "bytes": bytes.len(), "expect": args.expect });
+        let d = &target.device;
+        let entry = AuditEntry::new(
+            "serial.send",
+            &d.port,
+            d.usb_serial.as_deref(),
+            args,
+            outcome,
+        );
+        audit::record(&entry)
+            .err()
+            .map(|e| Warning::new("AUDIT_FAILED", e))
+    });
     match result {
         Ok(mut data) => {
             let elf = target.elf(None);
@@ -95,6 +115,7 @@ pub fn send(global: &GlobalArgs, args: SendArgs, format: Format, style: &Style) 
                 .and_then(|r| outcome_error(r, &expect, timeout, None));
             let mut reply = Reply::ok(&data, style);
             reply.warnings.extend(warning);
+            reply.warnings.extend(audit_warning.flatten());
             match err {
                 Some(e) => reply.with_error(e),
                 None => reply,

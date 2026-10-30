@@ -156,10 +156,17 @@ pub fn load(search: &ConfigSearch) -> Result<LoadedConfig, PogoError> {
         let table = parse_file(&file.path)?;
         merge(&mut merged, table, &file.path, "", &mut sources);
     }
-    let config: Config = Value::Table(merged.clone())
+    let mut config: Config = Value::Table(merged.clone())
         .try_into()
         .map_err(|e: toml::de::Error| PogoError::Config(format!("merged config: {e}")))?;
     validate(&config, &sources)?;
+    // A relative `elf` means relative to the file that set it, not the current directory.
+    for (name, device) in &mut config.devices {
+        let source = sources.get(&format!("devices.{name}.elf"));
+        if let (Some(elf), Some(dir)) = (&mut device.elf, source.and_then(|s| s.parent())) {
+            *elf = dir.join(&*elf);
+        }
+    }
     Ok(LoadedConfig {
         files,
         merged,

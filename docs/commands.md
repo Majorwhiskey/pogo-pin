@@ -79,7 +79,16 @@ Runs environment checks and reports each as `pass`, `warn`, or `fail` with a hin
 pogo info
 ```
 
-Connects to the ROM bootloader and reports chip, revision, features, MAC address, and flash size. **Note:** entering the bootloader resets the target; this is documented in its help text.
+Connects to the ROM bootloader and reports chip, revision, features, MAC address, and flash size. **Note:** entering the bootloader resets the target; this is documented in its help text. Afterwards the target is reset back into run mode.
+
+```json
+"data": {
+  "device": { "alias": null, "port": "/dev/cu.usbserial-0001", "usb_serial": "0001" },
+  "chip": "esp32", "revision": "v3.1", "crystal": "40 MHz",
+  "features": ["WiFi", "BT", "Dual Core", "240MHz"],
+  "mac": "d4:8a:fc:d0:d4:10", "flash_size_bytes": 4194304
+}
+```
 
 ## 7.4 `pogo flash`
 
@@ -94,7 +103,11 @@ pogo flash <IMAGE> [--address <ADDR>] [--chip <CHIP>] [--flash-baud <BAUD>]
 - `<IMAGE>` may be an **ELF** (preferred; converted to an app image and flashed with bootloader and partition table, following espflash defaults) or a raw **`.bin`**, which requires `--address`.
 - Raw writes below the app region (bootloader and partition table area) are refused unless `--allow-bootloader-write` is passed.
 - Verifies by default. Resets into run mode afterwards unless `--no-reset`.
-- `--erase-all` is guarded ([§11](guardrails.md#11-safety-guardrails)).
+- `--erase-all` is guarded ([§11](guardrails.md#11-safety-guardrails)): `--confirm` must equal the resolved device's USB serial, so a device without one cannot be erased.
+- Guardrails are checked before anything touches the device; a refusal is `GUARDRAIL_REFUSED` (exit 8).
+- `--dry-run` checks guardrails and returns `data.plan` (`image`, `bytes`, `address`, `erase_all`, `verify`, `reset_after`) instead of the flash report, without connecting.
+- Flashing uses the espflash library with its bundled bootloader. The ESP32 bootloader lands at `0x1000`; newer chips use `0x0`.
+- Every real flash is appended to the audit log ([§11](guardrails.md#11-safety-guardrails)); a failure to write it is an `AUDIT_FAILED` warning.
 
 ```json
 "data": {
@@ -119,6 +132,14 @@ pogo reset [--mode run|bootloader] [--via auto|dtr-rts|probe]
 ```
 
 `auto` uses the probe when `target_en`/`target_boot` pins are configured and the probe is connected, otherwise DTR/RTS toggling. Waits for re-enumeration on native USB boards.
+
+Until the probe exists (Phase 4), `auto` means `dtr-rts` and `--via probe` returns `NOT_IMPLEMENTED`. The DTR/RTS sequences follow esptool's hard reset (run) and classic reset (bootloader); native USB-Serial-JTAG boards use esptool's USB-JTAG sequence. After a reset of a native USB board, pogo waits up to 1s for it to drop off USB and up to 5s for it to return; `reconnected` reports whether it did.
+
+```json
+"data": { "device": { ... }, "mode": "run", "via": "dtr-rts", "reconnected": false, "dry_run": false }
+```
+
+`--dry-run` returns the same shape with `"dry_run": true` and changes nothing. Resets are recorded in the audit log.
 
 ## 7.6 `pogo serial capture`
 
@@ -171,6 +192,8 @@ Task watchdog got triggered
 
 **Panic location:** for Rust panics, `file:line:column` is parsed directly from the `panicked at` message, so a location is available even without an ELF. ESP-IDF style `Backtrace: 0xPC:0xSP ...` pairs and esp-backtrace address lists are symbolized against the ELF when one is provided.
 
+**Symbolization:** with `--elf` (or the config device's `elf`), each backtrace address is resolved to `function`, `file`, and `line` in `panic.frames`; inlined calls appear as extra frames marked `"inlined": true`. Both formats are read: ESP-IDF's single `Backtrace: 0xPC:0xSP ...` line, and esp-backtrace's bare `Backtrace:` followed by one address per line. If the ELF cannot be read, the capture still succeeds with a `SYMBOLIZE_FAILED` warning.
+
 ```json
 "data": {
   "device": { "alias": "target", "usb_serial": "F4:12:FA:9C:3A:10" },
@@ -219,6 +242,13 @@ pogo run <IMAGE> [flash flags] [capture flags] [--no-flash]
 ```
 
 Locks the device once, flashes, resets into run mode, and captures as if `--reset` were given. `data` contains `device`, `flash`, and `capture`. The exit code comes from the capture outcome unless flashing failed. `--no-flash` skips flashing (reset and capture only), which is useful for rerunning tests.
+
+After flashing, the target stays in the bootloader; the capture's own reset then starts the application, so the capture begins at the first boot byte. When `<IMAGE>` is an ELF it also symbolizes any panic backtrace, unless `--elf` or the config names another. With `--dry-run`, `data.plan` describes the flash and `capture` is `null`.
+
+```json
+"data": { "device": { ... }, "flash": { "chip": "esp32", "regions": [ ... ], ... },
+          "plan": null, "capture": { "outcome": "matched", ... } }
+```
 
 ## 7.9 `pogo i2c` (requires probe)
 

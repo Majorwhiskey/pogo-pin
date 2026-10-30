@@ -254,3 +254,37 @@ fn example_config_loads() {
         Some(ConfigDuration(Duration::from_millis(200)))
     );
 }
+
+#[test]
+fn relative_elf_resolves_against_its_config_file() {
+    let dir = scratch("elf");
+    write(
+        &dir.join("proj/pogo.toml"),
+        "[devices.target]\nkind = \"esp32\"\nmatch = { vid = 0x303a }\nelf = \"fw/app.elf\"\n",
+    );
+    let mut s = search(&dir);
+    s.cwd = dir.join("proj/sub");
+    std::fs::create_dir_all(&s.cwd).unwrap();
+    let loaded = load(&s).unwrap();
+    let elf = loaded.config.devices["target"].elf.clone().unwrap();
+    assert_eq!(elf, dir.join("proj").join("fw/app.elf"));
+
+    // Absolute on every OS (a drive letter on Windows); forward slashes keep TOML simple.
+    let abs = dir
+        .join("elsewhere")
+        .join("app.elf")
+        .display()
+        .to_string()
+        .replace('\\', "/");
+    write(
+        &dir.join("proj/pogo.toml"),
+        &format!(
+            "[devices.target]\nkind = \"esp32\"\nmatch = {{ vid = 0x303a }}\nelf = \"{abs}\"\n"
+        ),
+    );
+    let elf = load(&s).unwrap().config.devices["target"]
+        .elf
+        .clone()
+        .unwrap();
+    assert_eq!(elf, std::path::PathBuf::from(&abs));
+}
