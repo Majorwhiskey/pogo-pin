@@ -19,6 +19,8 @@ use crate::output::Format;
 #[derive(Debug, Parser)]
 #[command(
     name = "pogo",
+    // Fixed so help and usage text read the same on every OS (not `pogo.exe`).
+    bin_name = "pogo",
     version,
     about = "Agent-friendly hardware workbench: flash, monitor, and probe ESP32 boards",
     long_about = None,
@@ -225,5 +227,11 @@ mod tests {
         assert!(r.is_err());
         let r = Cli::try_parse_from(["pogo", "flash", "app.elf", "--erase-all", "--confirm", "X"]);
         assert!(r.is_ok());
+    }
+
+    #[test]
+    fn help_names_pogo_whatever_the_executable_is_called() {
+        let err = Cli::try_parse_from(["/opt/bin/pogo-renamed", "serial", "--help"]).unwrap_err();
+        assert!(err.to_string().contains("Usage: pogo serial"), "{err}");
     }
 }
