@@ -4,13 +4,13 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 
 ## Phase 0: Skeleton and contract
 
-- [ ] Workspace with the four crates; root `exclude = ["firmware/*"]`; `[workspace.lints]` denying `clippy::unwrap_used` and `clippy::expect_used` in non-test code
-- [ ] `BenchError`, `ErrorCode`, exit code mapping, hints
-- [ ] Output module: envelope, `human`/`json`/`jsonl`, stream discipline, colors
-- [ ] Config loading and merge; `config show|path|validate`
-- [ ] clap definitions for **all** commands; unimplemented ones return `NOT_IMPLEMENTED`
-- [ ] `devices` fully implemented; `schema` command; `completions`
-- [ ] CI ([§15](release.md#15-ci-release-and-distribution))
+- [x] Workspace with the four crates; root `exclude = ["firmware/*"]`; `[workspace.lints]` denying `clippy::unwrap_used` and `clippy::expect_used` in non-test code
+- [x] `BenchError`, `ErrorCode`, exit code mapping, hints
+- [x] Output module: envelope, `human`/`json`/`jsonl`, stream discipline, colors
+- [x] Config loading and merge; `config show|path|validate`
+- [x] clap definitions for **all** commands; unimplemented ones return `NOT_IMPLEMENTED`
+- [x] `devices` fully implemented; `schema` command; `completions`
+- [x] CI ([§15](release.md#15-ci-release-and-distribution))
 
 **Acceptance:** `cargo test` passes on Linux, macOS, and Windows. `pogo devices -f json` prints a valid envelope matching its schema. Every exit code has a test. Help snapshots exist for every command.
 
