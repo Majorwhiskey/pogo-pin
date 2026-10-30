@@ -2,16 +2,16 @@
 
 use std::path::PathBuf;
 
-use pogo_core::PogoError;
 use pogo_core::config::{
-    self, ConfigFileKind, ConfigPathResult, ConfigSearch, ConfigShowResult, ConfigValidateResult,
+    self, ConfigFileKind, ConfigPathResult, ConfigShowResult, ConfigValidateResult,
 };
+use pogo_core::ops::target::config_search;
 
 use crate::cli::ConfigCommand;
 use crate::output::{Render, Reply, Style};
 
 pub fn run(cmd: &ConfigCommand, explicit: Option<PathBuf>, style: &Style) -> Reply {
-    let search = match search(explicit) {
+    let search = match config_search(explicit) {
         Ok(s) => s,
         Err(e) => return Reply::error(&e),
     };
@@ -31,16 +31,6 @@ pub fn run(cmd: &ConfigCommand, explicit: Option<PathBuf>, style: &Style) -> Rep
             Err(e) => Reply::error(&e),
         },
     }
-}
-
-pub fn search(explicit: Option<PathBuf>) -> Result<ConfigSearch, PogoError> {
-    let cwd = std::env::current_dir()
-        .map_err(|e| PogoError::Internal(format!("cannot read current directory: {e}")))?;
-    Ok(ConfigSearch {
-        user: config::user_config_path(),
-        cwd,
-        explicit,
-    })
 }
 
 const NO_FILES: &str = "No config files found; built-in defaults apply.\n";

@@ -2,23 +2,14 @@
 
 use std::path::PathBuf;
 
-use pogo_core::config;
-use pogo_core::discovery::{self, DeviceKind, DevicesResult};
+use pogo_core::discovery::{DeviceKind, DevicesResult};
+use pogo_core::ops::devices::devices;
 
-use crate::commands::config::search;
+use crate::commands::target::reply;
 use crate::output::{Render, Reply, Style};
 
 pub fn run(all: bool, explicit: Option<PathBuf>, style: &Style) -> Reply {
-    let result = search(explicit)
-        .and_then(|s| config::load(&s))
-        .and_then(|loaded| {
-            let ports = discovery::enumerate()?;
-            Ok(discovery::list_devices(ports, &loaded.config, all))
-        });
-    match result {
-        Ok(r) => Reply::ok(&r, style),
-        Err(e) => Reply::error(&e),
-    }
+    reply(devices(explicit, all), style)
 }
 
 impl Render for DevicesResult {

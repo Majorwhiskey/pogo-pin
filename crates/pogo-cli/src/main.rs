@@ -81,13 +81,23 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
                 }
             }
         }
+        Command::Mcp => {
+            // stdout carries the MCP protocol, so there is no envelope afterwards.
+            match pogo_mcp::serve_stdio() {
+                Ok(()) => std::process::exit(0),
+                Err(e) => {
+                    eprintln!("error[INTERNAL]: MCP server failed: {e}");
+                    std::process::exit(1);
+                }
+            }
+        }
         Command::Completions { shell } => {
             let mut cmd = Cli::command();
             clap_complete::generate(shell, &mut cmd, "pogo", &mut std::io::stdout());
             // The script is the output; there is no envelope.
             std::process::exit(0);
         }
-        other => Reply::error(&PogoError::NotImplemented(other.name())),
+        other => Reply::error(PogoError::NotImplemented(other.name())),
     }
 }
 

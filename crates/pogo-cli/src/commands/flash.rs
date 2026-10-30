@@ -1,159 +1,38 @@
-//! `pogo info` and `pogo flash`.
+//! `pogo info` and `pogo flash`: clap flags to core requests, and output rendering.
 
-use pogo_core::audit::{self, AuditEntry};
-use pogo_core::flash::esp::EspFlasher;
-use pogo_core::flash::{
-    FlashData, FlashImage, FlashOptions, FlashPlan, Flasher, InfoData, check_guardrails,
-};
-use pogo_core::{ErrorBody, ErrorCode, PogoError, Warning};
+use pogo_core::flash::{FlashData, InfoData};
+use pogo_core::ops::flash::{self, FlashRequest};
 
 use crate::cli::{FlashArgs, GlobalArgs};
-use crate::commands::target::{self, Target};
+use crate::commands::target::{reply, selection};
 use crate::output::{Render, Reply, Style};
 
 pub fn info(global: &GlobalArgs, style: &Style) -> Reply {
-    let target = match target::acquire(global, "info") {
-        Ok(t) => t,
-        Err(reply) => return *reply,
-    };
-    if let Err(reply) = target.require_hardware() {
-        return *reply;
-    }
-    let d = &target.device;
-    let result = EspFlasher::connect(&d.port, d.usb_ids, None, None, false).and_then(|mut f| {
-        let info = f.info()?;
-        // Leave the target running its application, as it was before.
-        f.reset_to_run()?;
-        Ok(info)
-    });
-    match result {
-        Ok(info) => Reply::ok(
-            &InfoData {
-                device: target.device.clone(),
-                info,
-            },
-            style,
-        ),
-        Err(e) => Reply::error(&e),
-    }
-}
-
-/// The parsed image and options for `flash` and `run`.
-pub struct FlashRequest {
-    pub image: FlashImage,
-    pub opts: FlashOptions,
-    pub chip: Option<String>,
-    pub flash_baud: Option<u32>,
-    pub audit_args: serde_json::Value,
-}
-
-/// Read the image and turn flags into options; problems here are usage errors.
-pub fn request(args: &FlashArgs, reset_after: bool) -> Result<FlashRequest, Box<Reply>> {
-    let usage = |msg: String| Box::new(Reply::error(ErrorBody::new(ErrorCode::Usage, msg)));
-    let data = std::fs::read(&args.image)
-        .map_err(|e| usage(format!("cannot read {}: {e}", args.image.display())))?;
-    let image = FlashImage::from_bytes(data, args.address).map_err(usage)?;
-    Ok(FlashRequest {
-        image,
-        opts: FlashOptions {
-            verify: !args.no_verify,
-            reset_after,
-            erase_all: args.erase_all,
-            confirm: args.confirm.clone(),
-            allow_bootloader_write: args.allow_bootloader_write,
-            bootloader: args.bootloader.clone(),
-            partition_table: args.partition_table.clone(),
-        },
-        chip: args.chip.clone(),
-        flash_baud: args.flash_baud,
-        audit_args: serde_json::json!({
-            "image": args.image.display().to_string(),
-            "address": args.address.map(|a| format!("{a:#x}")),
-            "erase_all": args.erase_all,
-            "allow_bootloader_write": args.allow_bootloader_write,
-        }),
-    })
-}
-
-/// Guardrails, then flash (or plan, with `--dry-run`), then audit. Returns the data and
-/// any warnings, or the error to report.
-pub fn flash_target(
-    target: &Target,
-    req: &FlashRequest,
-    dry_run: bool,
-) -> Result<(FlashData, Vec<Warning>), PogoError> {
-    check_guardrails(&req.image, &req.opts, &target.device)?;
-    if dry_run {
-        return Ok((
-            FlashData {
-                device: target.device.clone(),
-                report: None,
-                plan: Some(FlashPlan::new(&req.image, &req.opts)),
-            },
-            Vec::new(),
-        ));
-    }
-    let d = &target.device;
-    let result = EspFlasher::connect(
-        &d.port,
-        d.usb_ids,
-        req.chip.as_deref(),
-        req.flash_baud,
-        req.opts.verify,
-    )
-    .and_then(|mut f| f.flash(&req.image, &req.opts));
-    let outcome = match &result {
-        Ok(_) => "ok".to_string(),
-        Err(e) => e.code().as_str().to_string(),
-    };
-    let entry = AuditEntry::new(
-        "flash",
-        &d.port,
-        d.usb_serial.as_deref(),
-        req.audit_args.clone(),
-        &outcome,
-    );
-    let warnings = audit::record(&entry)
-        .err()
-        .map(|e| Warning::new("AUDIT_FAILED", e))
-        .into_iter()
-        .collect();
-    let report = result?;
-    Ok((
-        FlashData {
-            device: target.device.clone(),
-            report: Some(report),
-            plan: None,
-        },
-        warnings,
-    ))
+    reply(flash::info(&selection(global)), style)
 }
 
 pub fn flash(global: &GlobalArgs, args: &FlashArgs, style: &Style) -> Reply {
-    let req = match request(args, !args.no_reset) {
-        Ok(r) => r,
-        Err(reply) => return *reply,
-    };
-    let target = match target::acquire(global, "flash") {
-        Ok(t) => t,
-        Err(reply) => return *reply,
-    };
-    // A refused request is refused whatever the device, so guardrails come first.
-    if let Err(e) = check_guardrails(&req.image, &req.opts, &target.device) {
-        return Reply::error(&e);
-    }
-    if !global.dry_run
-        && let Err(reply) = target.require_hardware()
-    {
-        return *reply;
-    }
-    match flash_target(&target, &req, global.dry_run) {
-        Ok((data, warnings)) => {
-            let mut reply = Reply::ok(&data, style);
-            reply.warnings = warnings;
-            reply
-        }
-        Err(e) => Reply::error(&e),
+    let result = flash::flash(
+        &selection(global),
+        &flash_request(args),
+        !args.no_reset,
+        global.dry_run,
+    );
+    reply(result, style)
+}
+
+pub fn flash_request(args: &FlashArgs) -> FlashRequest {
+    FlashRequest {
+        image: args.image.clone(),
+        address: args.address,
+        chip: args.chip.clone(),
+        flash_baud: args.flash_baud,
+        bootloader: args.bootloader.clone(),
+        partition_table: args.partition_table.clone(),
+        verify: !args.no_verify,
+        erase_all: args.erase_all,
+        confirm: args.confirm.clone(),
+        allow_bootloader_write: args.allow_bootloader_write,
     }
 }
 

@@ -105,5 +105,10 @@ fn bad_hex_and_bad_pattern_are_usage_errors() {
     let v = json("clean_boot", &["--hex", "zz"], 2);
     assert_eq!(v["error"]["code"], "USAGE");
     let v = json("clean_boot", &["x", "--expect", "("], 2);
-    assert!(v["error"]["message"].as_str().unwrap().contains("--expect"));
+    assert!(
+        v["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("invalid expect pattern")
+    );
 }

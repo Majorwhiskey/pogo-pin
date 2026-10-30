@@ -87,6 +87,12 @@ impl From<&PogoError> for ErrorBody {
     }
 }
 
+impl From<PogoError> for ErrorBody {
+    fn from(err: PogoError) -> Self {
+        ErrorBody::from(&err)
+    }
+}
+
 /// Something worth knowing that did not cause the command to fail.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct Warning {
