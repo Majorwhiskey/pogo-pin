@@ -130,7 +130,9 @@ pub fn panic_report(line_index: usize, block: &[&str]) -> PanicReport {
                 .collect();
         } else if let Some(pc) = bare_address(text) {
             report.backtrace.push(pc);
-        } else if report.message.is_none() && text.contains("Guru Meditation Error") {
+        } else if report.message.is_none()
+            && (text.contains("Guru Meditation Error") || text.contains("abort() was called"))
+        {
             report.message = Some(text.trim().to_string());
         }
     }
