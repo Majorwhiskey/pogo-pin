@@ -11,8 +11,8 @@ use rmcp::{ServerHandler, ServiceExt, tool, tool_handler, tool_router};
 
 use convert::{blocking, capture_request, flash_request, parse_duration, selection};
 use params::{
-    DeviceParams, DoctorParams, FlashParams, ListDevicesParams, ResetModeParam, ResetParams,
-    RunParams, SerialCaptureParams, SerialSendParams,
+    DoctorParams, FlashParams, ListDevicesParams, ResetModeParam, ResetParams, RunParams,
+    SerialCaptureParams, SerialSendParams, TargetParams,
 };
 use pogo_core::ops;
 
@@ -65,8 +65,11 @@ impl PogoServer {
             Takes several seconds.",
         annotations(read_only_hint = false, destructive_hint = false)
     )]
-    async fn device_info(&self, Parameters(p): Parameters<DeviceParams>) -> CallToolResult {
-        let sel = selection(p.device);
+    async fn device_info(&self, Parameters(p): Parameters<TargetParams>) -> CallToolResult {
+        let sel = match selection(&p) {
+            Ok(s) => s,
+            Err(e) => return convert::fail(e),
+        };
         blocking(move || ops::flash::info(&sel)).await
     }
 
@@ -78,7 +81,10 @@ impl PogoServer {
         annotations(read_only_hint = false, destructive_hint = true)
     )]
     async fn flash(&self, Parameters(p): Parameters<FlashParams>) -> CallToolResult {
-        let sel = selection(p.device.clone());
+        let sel = match selection(&p.target) {
+            Ok(s) => s,
+            Err(e) => return convert::fail(e),
+        };
         let req = match flash_request(&p) {
             Ok(r) => r,
             Err(e) => return convert::fail(e),
@@ -94,7 +100,10 @@ impl PogoServer {
         annotations(read_only_hint = false, destructive_hint = false)
     )]
     async fn reset(&self, Parameters(p): Parameters<ResetParams>) -> CallToolResult {
-        let sel = selection(p.device);
+        let sel = match selection(&p.target) {
+            Ok(s) => s,
+            Err(e) => return convert::fail(e),
+        };
         let mode = match p.mode {
             ResetModeParam::Run => ops::reset::ResetMode::Run,
             ResetModeParam::Bootloader => ops::reset::ResetMode::Bootloader,
@@ -116,7 +125,10 @@ impl PogoServer {
         &self,
         Parameters(p): Parameters<SerialCaptureParams>,
     ) -> CallToolResult {
-        let sel = selection(p.device.clone());
+        let sel = match selection(&p.target) {
+            Ok(s) => s,
+            Err(e) => return convert::fail(e),
+        };
         let (req, timeout) = match capture_request(&p.capture)
             .and_then(|req| Ok((req, parse_duration(p.timeout.as_deref())?)))
         {
@@ -142,7 +154,10 @@ impl PogoServer {
         annotations(read_only_hint = false, destructive_hint = false)
     )]
     async fn serial_send(&self, Parameters(p): Parameters<SerialSendParams>) -> CallToolResult {
-        let sel = selection(p.device.clone());
+        let sel = match selection(&p.target) {
+            Ok(s) => s,
+            Err(e) => return convert::fail(e),
+        };
         let parsed = convert::send_request(&p)
             .and_then(|req| Ok((req, parse_duration(p.timeout.as_deref())?)));
         let (req, timeout) = match parsed {
@@ -168,7 +183,10 @@ impl PogoServer {
         annotations(read_only_hint = false, destructive_hint = true)
     )]
     async fn run(&self, Parameters(p): Parameters<RunParams>) -> CallToolResult {
-        let sel = selection(p.device.clone());
+        let sel = match selection(&p.target) {
+            Ok(s) => s,
+            Err(e) => return convert::fail(e),
+        };
         let flash_params = FlashParams {
             image: p.image.clone(),
             address: p.address.clone(),

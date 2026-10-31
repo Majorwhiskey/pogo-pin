@@ -9,7 +9,7 @@ use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 use serde_json::{Value, json};
 
 /// A private copy per test: the replay path is the lock key, and MCP tools do not wait
-/// for a busy device, so tests sharing a fixture would collide.
+/// for a busy device unless given `wait_lock`, so tests sharing a fixture would collide.
 fn fixture(name: &str) -> String {
     use std::sync::atomic::{AtomicU32, Ordering};
     static N: AtomicU32 = AtomicU32::new(0);
@@ -214,4 +214,38 @@ fn flash_guardrails_hold_over_mcp() {
         json!({ "image": bin.to_str().unwrap(), "address": "0x8000" }),
     );
     assert_eq!(r["structuredContent"]["error"]["code"], "GUARDRAIL_REFUSED");
+}
+
+#[test]
+fn busy_device_fails_at_once_unless_wait_lock_is_given() {
+    let replay = fixture("clean_boot");
+    // A CLI capture with no `until` holds the device lock for its whole timeout.
+    let mut holder = Command::new(assert_cmd::cargo::cargo_bin("pogo"))
+        .env_remove("POGO_CONFIG")
+        .env("POGO_REPLAY", &replay)
+        .args(["serial", "capture", "--timeout", "2s", "-f", "json"])
+        .stdout(Stdio::null())
+        .spawn()
+        .unwrap();
+    let mut c = Client::start(&replay);
+    let args = json!({ "timeout": "100ms" });
+    let start = std::time::Instant::now();
+    loop {
+        let r = c.call("serial_capture", args.clone());
+        if r["structuredContent"]["error"]["code"] == "DEVICE_BUSY" {
+            break;
+        }
+        assert!(
+            start.elapsed().as_secs() < 2,
+            "the holder never took the lock"
+        );
+    }
+    let r = c.call(
+        "serial_capture",
+        json!({ "timeout": "100ms", "wait_lock": "10s" }),
+    );
+    assert_eq!(r["isError"], false, "{r:#}");
+    assert!(holder.wait().unwrap().success());
+    let r = c.call("serial_capture", json!({ "wait_lock": "later" }));
+    assert_eq!(r["structuredContent"]["error"]["code"], "USAGE");
 }

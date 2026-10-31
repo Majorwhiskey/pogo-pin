@@ -13,16 +13,18 @@ use pogo_core::{ErrorBody, ErrorCode};
 use rmcp::model::CallToolResult;
 use serde::Serialize;
 
-use crate::params::{CaptureParams, FlashParams, LineEndingParam, ParserParam, SerialSendParams};
+use crate::params::{
+    CaptureParams, FlashParams, LineEndingParam, ParserParam, SerialSendParams, TargetParams,
+};
 
 /// MCP has no flags, so the config comes from `POGO_CONFIG` or the usual search.
-pub fn selection(device: Option<String>) -> Selection {
-    Selection {
+pub fn selection(t: &TargetParams) -> Result<Selection, ErrorBody> {
+    Ok(Selection {
         config: std::env::var_os("POGO_CONFIG").map(PathBuf::from),
-        device,
-        wait_lock: None,
+        device: t.device.clone(),
+        wait_lock: parse_duration(t.wait_lock.as_deref())?,
         replay: std::env::var_os("POGO_REPLAY").map(PathBuf::from),
-    }
+    })
 }
 
 fn usage(msg: impl Into<String>) -> ErrorBody {

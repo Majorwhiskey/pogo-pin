@@ -18,10 +18,13 @@ pub struct DoctorParams {
 }
 
 #[derive(Debug, Default, Deserialize, JsonSchema)]
-pub struct DeviceParams {
+pub struct TargetParams {
     /// Target device: config alias, USB serial number, port path, or "auto" (default:
     /// the "target" alias if configured, else auto; auto fails if several boards match).
     pub device: Option<String>,
+    /// If another command is using the device, wait up to this long for it, e.g. "30s"
+    /// (default: fail at once with DEVICE_BUSY).
+    pub wait_lock: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, JsonSchema)]
@@ -36,8 +39,8 @@ pub enum ResetModeParam {
 
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 pub struct ResetParams {
-    /// Target device (see list_devices).
-    pub device: Option<String>,
+    #[serde(flatten)]
+    pub target: TargetParams,
     /// "run" (default) or "bootloader".
     #[serde(default)]
     pub mode: ResetModeParam,
@@ -68,8 +71,8 @@ pub struct FlashParams {
     /// Check guardrails and report the plan without touching the device.
     #[serde(default)]
     pub dry_run: bool,
-    /// Target device (see list_devices).
-    pub device: Option<String>,
+    #[serde(flatten)]
+    pub target: TargetParams,
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, JsonSchema)]
@@ -118,8 +121,8 @@ pub struct SerialCaptureParams {
     pub reset: bool,
     /// Overall deadline, e.g. "10s" (default: config defaults.timeout, else 10s).
     pub timeout: Option<String>,
-    /// Target device (see list_devices).
-    pub device: Option<String>,
+    #[serde(flatten)]
+    pub target: TargetParams,
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, JsonSchema)]
@@ -146,8 +149,8 @@ pub struct SerialSendParams {
     pub expect: Option<String>,
     /// Deadline for the reply, e.g. "5s" (default: config defaults.timeout, else 5s).
     pub timeout: Option<String>,
-    /// Target device (see list_devices).
-    pub device: Option<String>,
+    #[serde(flatten)]
+    pub target: TargetParams,
 }
 
 #[derive(Debug, Default, Deserialize, JsonSchema)]
@@ -166,6 +169,6 @@ pub struct RunParams {
     pub dry_run: bool,
     /// Capture deadline after flashing, e.g. "10s" (default: config defaults.timeout, else 10s).
     pub timeout: Option<String>,
-    /// Target device (see list_devices).
-    pub device: Option<String>,
+    #[serde(flatten)]
+    pub target: TargetParams,
 }
