@@ -27,7 +27,7 @@ fn json(stdout: &[u8]) -> Value {
 #[test]
 fn not_implemented_json_envelope_exits_1() {
     let out = pogo()
-        .args(["probe", "selftest", "-f", "json"])
+        .args(["power", "on", "-f", "json"])
         .assert()
         .code(1)
         .get_output()
@@ -39,7 +39,7 @@ fn not_implemented_json_envelope_exits_1() {
     );
     let v = json(&out.stdout);
     assert_eq!(v["schema_version"], 1);
-    assert_eq!(v["command"], "probe.selftest");
+    assert_eq!(v["command"], "power.on");
     assert_eq!(v["ok"], false);
     assert_eq!(v["data"], Value::Null);
     assert_eq!(v["error"]["code"], "NOT_IMPLEMENTED");
@@ -50,32 +50,32 @@ fn not_implemented_json_envelope_exits_1() {
 #[test]
 fn dotted_command_names() {
     let out = pogo()
-        .args(["i2c", "scan", "--format=json"])
+        .args(["power", "measure", "--format=json"])
         .assert()
         .code(1)
         .get_output()
         .clone();
-    assert_eq!(json(&out.stdout)["command"], "i2c.scan");
+    assert_eq!(json(&out.stdout)["command"], "power.measure");
 }
 
 #[test]
 fn format_from_env() {
     let out = pogo()
         .env("POGO_FORMAT", "jsonl")
-        .args(["probe", "info"])
+        .args(["power", "off"])
         .assert()
         .code(1)
         .get_output()
         .clone();
     let v = json(&out.stdout);
     assert_eq!(v["type"], "result");
-    assert_eq!(v["command"], "probe.info");
+    assert_eq!(v["command"], "power.off");
 }
 
 #[test]
 fn human_error_goes_to_stderr_only() {
     let out = pogo()
-        .args(["probe", "selftest"])
+        .args(["power", "cycle"])
         .assert()
         .code(1)
         .get_output()
@@ -83,7 +83,7 @@ fn human_error_goes_to_stderr_only() {
     assert!(out.stdout.is_empty());
     let stderr = String::from_utf8(out.stderr).unwrap();
     assert!(
-        stderr.starts_with("error[NOT_IMPLEMENTED]: not implemented yet: probe.selftest"),
+        stderr.starts_with("error[NOT_IMPLEMENTED]: not implemented yet: power.cycle"),
         "{stderr}"
     );
     assert!(stderr.contains("hint:"));

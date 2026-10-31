@@ -7,6 +7,7 @@ use serde::Serialize;
 use crate::config::LoadedConfig;
 use crate::discovery::{DeviceKind, DevicesResult};
 use crate::error::PogoError;
+use crate::probe::ProbeHello;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -18,7 +19,9 @@ pub enum CheckStatus {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct Check {
-    /// Stable id: `config`, `devices`, `permissions`, `modemmanager`, `probe`, `open`.
+    /// Stable id: `config`, `devices`, `permissions`, `modemmanager`, `probe`, `open`,
+    /// `probe_firmware` (doctor); `handshake`, `pins_released`, `ina226`, `i2c_bus0`
+    /// (probe selftest).
     pub id: String,
     pub status: CheckStatus,
     pub message: String,
@@ -26,7 +29,7 @@ pub struct Check {
 }
 
 impl Check {
-    fn new(id: &str, status: CheckStatus, message: impl Into<String>) -> Self {
+    pub fn new(id: &str, status: CheckStatus, message: impl Into<String>) -> Self {
         Check {
             id: id.into(),
             status,
@@ -35,7 +38,7 @@ impl Check {
         }
     }
 
-    fn hint(mut self, hint: impl Into<String>) -> Self {
+    pub fn hint(mut self, hint: impl Into<String>) -> Self {
         self.hint = Some(hint.into());
         self
     }
@@ -163,10 +166,50 @@ pub fn open_check(port: &str, result: Result<(), PogoError>) -> Check {
     }
 }
 
+/// The probe handshake (`doctor --deep`): firmware present and protocol compatible.
+pub fn probe_firmware_check(port: &str, result: Result<ProbeHello, PogoError>) -> Check {
+    match result {
+        Ok(h) => Check::new(
+            "probe_firmware",
+            CheckStatus::Pass,
+            format!(
+                "pogo probe {} on {port}, protocol {}.{}",
+                h.fw_version, h.protocol_major, h.protocol_minor
+            ),
+        ),
+        Err(e) => {
+            let check = Check::new("probe_firmware", CheckStatus::Fail, format!("{port}: {e}"));
+            match e.hint() {
+                Some(h) => check.hint(h),
+                None => check,
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::discovery::DeviceInfo;
+
+    #[test]
+    fn probe_firmware_mismatch_fails_with_the_update_hint() {
+        let hello = ProbeHello {
+            protocol_major: 1,
+            protocol_minor: 2,
+            fw_version: "0.3.0".into(),
+        };
+        let ok = probe_firmware_check("/dev/p", Ok(hello));
+        assert_eq!(ok.status, CheckStatus::Pass);
+        assert_eq!(ok.message, "pogo probe 0.3.0 on /dev/p, protocol 1.2");
+        let mismatch = PogoError::ProtocolMismatch {
+            host_major: 1,
+            probe_major: 2,
+        };
+        let bad = probe_firmware_check("/dev/p", Err(mismatch));
+        assert_eq!(bad.status, CheckStatus::Fail);
+        assert!(bad.hint.unwrap().contains("Flash probe firmware"));
+    }
 
     fn listed(kinds: &[(DeviceKind, &str)]) -> Result<DevicesResult, PogoError> {
         Ok(DevicesResult {

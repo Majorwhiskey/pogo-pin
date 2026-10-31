@@ -8,6 +8,9 @@
 
 pub mod codec;
 
+/// Re-exported because message fields use its `Vec` and `String`.
+pub use heapless;
+
 use heapless::{String, Vec};
 use serde::{Deserialize, Serialize};
 

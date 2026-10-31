@@ -8,6 +8,9 @@ use crate::discovery::DevicesResult;
 use crate::doctor::DoctorData;
 use crate::envelope::Envelope;
 use crate::flash::{FlashData, InfoData};
+use crate::ops::gpio::{GpioGetData, GpioPulseData, GpioSetData};
+use crate::ops::i2c::{I2cReadData, I2cScanData, I2cWriteData};
+use crate::ops::probe::{ProbeInfoData, SelftestData};
 use crate::reset::ResetData;
 use crate::run::RunData;
 use crate::serial::send::SerialSendData;
@@ -23,6 +26,14 @@ pub const COMMANDS_WITH_SCHEMA: &[&str] = &[
     "run",
     "serial.capture",
     "serial.send",
+    "i2c.scan",
+    "i2c.read",
+    "i2c.write",
+    "gpio.get",
+    "gpio.set",
+    "gpio.pulse",
+    "probe.info",
+    "probe.selftest",
     "config.show",
     "config.path",
     "config.validate",
@@ -39,6 +50,14 @@ pub fn envelope_schema(command: &str) -> Option<Value> {
         "run" => schema_for!(Envelope<RunData>),
         "serial.capture" => schema_for!(Envelope<SerialCaptureData>),
         "serial.send" => schema_for!(Envelope<SerialSendData>),
+        "i2c.scan" => schema_for!(Envelope<I2cScanData>),
+        "i2c.read" => schema_for!(Envelope<I2cReadData>),
+        "i2c.write" => schema_for!(Envelope<I2cWriteData>),
+        "gpio.get" => schema_for!(Envelope<GpioGetData>),
+        "gpio.set" => schema_for!(Envelope<GpioSetData>),
+        "gpio.pulse" => schema_for!(Envelope<GpioPulseData>),
+        "probe.info" => schema_for!(Envelope<ProbeInfoData>),
+        "probe.selftest" => schema_for!(Envelope<SelftestData>),
         "config.show" => schema_for!(Envelope<ConfigShowResult>),
         "config.path" => schema_for!(Envelope<ConfigPathResult>),
         "config.validate" => schema_for!(Envelope<ConfigValidateResult>),
@@ -62,7 +81,7 @@ mod tests {
             assert_eq!(s["title"], format!("pogo {cmd} envelope"));
             assert!(s["properties"]["data"].is_object(), "{cmd}");
         }
-        assert!(envelope_schema("i2c.scan").is_none());
+        assert!(envelope_schema("power.measure").is_none());
     }
 
     #[test]

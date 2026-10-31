@@ -8,6 +8,7 @@
 - `defaults.timeout`: the timeout for commands that take one when `--timeout` is not given (instead of 10 s for capture/run, 5 s for send).
 - `defaults.baud`: serial baud rate when `--baud` is not given.
 - `devices.<alias>.*` applies when that device is the one selected (by `--device <alias>`, or because the config's `target` alias matched): `chip` skips chip detection when flashing, `parser` is the log parser when `--parser` is not given, `elf` symbolizes panics when `--elf` is not given (relative paths are relative to the config file), and `reset = "probe"` makes resets fail with `NOT_IMPLEMENTED` until the probe exists (Phase 4); `auto` and `dtr-rts` use DTR/RTS.
+- `pins.<name>` declares the only probe pins `gpio` may touch: `probe_pin` is the probe's GP number, `mode` is `open-drain` (the default when left out; never driven high), `push-pull`, or `input` (never driven). `power.ina226_addr` (default `0x40`) is what `probe selftest` looks for on bus 1, and `guardrails.i2c_protected_addrs` replaces the default protected range `0x50-0x57` for `i2c write`.
 
 ```toml
 # pogo.toml

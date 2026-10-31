@@ -8,10 +8,12 @@ use crate::config;
 use crate::discovery::{self, DeviceKind, DevicesResult};
 use crate::doctor::{
     Check, CheckStatus, DoctorData, config_check, devices_check, open_check, probe_check,
+    probe_firmware_check,
 };
 use crate::envelope::ErrorBody;
 use crate::error::{ErrorCode, PogoError};
 use crate::lock;
+use crate::probe::ProbeClient;
 use crate::transport::SerialTransport;
 
 /// `deep` also opens each board's port (without resetting it).
@@ -34,6 +36,7 @@ pub fn doctor(config: Option<PathBuf>, deep: bool) -> OpResult<DoctorData> {
     checks.push(probe_check(&devices));
     if deep {
         checks.extend(open_checks(&devices));
+        checks.extend(probe_firmware_checks(&devices));
     }
 
     let error = if loaded.is_err() {
@@ -73,6 +76,30 @@ fn open_checks(devices: &Result<DevicesResult, PogoError>) -> Vec<Check> {
             let result = lock::lock_device(&key, "doctor", None)
                 .and_then(|_lock| SerialTransport::open(&d.port, 115_200).map(drop));
             open_check(&d.port, result)
+        })
+        .collect()
+}
+
+/// Lock each probe and say hello, the way a probe command would.
+fn probe_firmware_checks(devices: &Result<DevicesResult, PogoError>) -> Vec<Check> {
+    let Ok(devices) = devices else {
+        return Vec::new();
+    };
+    devices
+        .devices
+        .iter()
+        .filter(|d| d.kind == DeviceKind::PogoProbe)
+        .map(|d| {
+            let key = d
+                .usb
+                .as_ref()
+                .and_then(|u| u.serial_number.clone())
+                .unwrap_or_else(|| d.port.clone());
+            let result = lock::lock_device(&key, "doctor", None).and_then(|_lock| {
+                let t = SerialTransport::open(&d.port, 115_200)?;
+                Ok(ProbeClient::connect(t)?.hello)
+            });
+            probe_firmware_check(&d.port, result)
         })
         .collect()
 }

@@ -63,7 +63,7 @@ pogo doctor [--deep]
 
 Runs environment checks and reports each as `pass`, `warn`, or `fail` with a hint: config parses, devices visible, port permissions (Linux group membership), ModemManager interference, probe present and firmware compatible. `--deep` also opens ports and performs the probe handshake.
 
-Check ids: `config`, `devices`, `permissions` and `modemmanager` (Linux only; left out elsewhere), `probe`, and with `--deep` one `open` check per board (its port is locked and opened without a reset). Probe firmware compatibility needs the probe handshake, which arrives with the probe in Phase 4. Warnings (no board, no probe, ModemManager running) do not fail the command. Exit codes: 0 when nothing failed; `CHECK_FAILED` (exit 1) when a check failed; `CONFIG_INVALID` (exit 10) when the config does not parse, with `data.checks` still reported.
+Check ids: `config`, `devices`, `permissions` and `modemmanager` (Linux only; left out elsewhere), `probe`, and with `--deep` one `open` check per board (its port is locked and opened without a reset) and one `probe_firmware` check per probe (it is locked and sent the protocol handshake; a major version mismatch fails with the firmware update hint). Warnings (no board, no probe, ModemManager running) do not fail the command. Exit codes: 0 when nothing failed; `CHECK_FAILED` (exit 1) when a check failed; `CONFIG_INVALID` (exit 10) when the config does not parse, with `data.checks` still reported.
 
 ```json
 "data": {
@@ -260,7 +260,7 @@ pogo i2c read  <ADDR> [--reg <REG>] --len <N> [--bus 0]
 pogo i2c write <ADDR> <BYTE>... [--bus 0]
 ```
 
-Bus 0 is the user bus; bus 1 is reserved for the INA226. `read` with `--reg` writes the register address and then does a repeated-start read. Scan results include a `may_be` hint from a small built-in table (for example, `0x76` → BME280/BMP280, `0x68` → MPU6050/DS3231, `0x3c` → SSD1306, `0x50–0x57` → EEPROM).
+Bus 0 is the user bus; bus 1 is reserved for the INA226. `read` with `--reg` writes the register address and then does a repeated-start read. `scan` and `read` work on either bus; `write` is refused on bus 1 and to protected addresses (`[guardrails] i2c_protected_addrs`, default `0x50-0x57`) with `GUARDRAIL_REFUSED` (exit 8), and supports `--dry-run`. A device that does not acknowledge is `DEVICE_IO` (exit 6). `write` data is `{ bus, addr, bytes_written, bytes_hex, dry_run }`. Scan results include a `may_be` hint from a small built-in table (for example, `0x76` → BME280/BMP280, `0x68` → MPU6050/DS3231, `0x3c` → SSD1306, `0x50–0x57` → EEPROM).
 
 ```json
 "data": {
@@ -287,6 +287,8 @@ pogo gpio pulse <PIN> [--level low|high] [--duration 100ms]
 ```
 
 `<PIN>` is a name declared in the config's `[pins]` table. Open-drain pins accept only `low` and `release`. Pulses are timed on the probe, not the host, so they're precise. Pin states persist after the command exits, until changed, released, or the probe loses USB.
+
+An undeclared pin, a `probe_pin` outside the firmware allow-list (GP2, GP3, GP8, GP9-GP15), `high` on an open-drain pin, and driving a pin declared `input` are refused with `GUARDRAIL_REFUSED` (exit 8) before the probe is contacted. A pin without `mode` is treated as open-drain. `set` and `pulse` first send the pin's mode, then the level, support `--dry-run`, and are written to the audit log. Pulses run from 1 µs to 60 s. Data: `get` `{ pin, probe_pin, level }`, `set` `{ pin, probe_pin, state, dry_run }`, `pulse` `{ pin, probe_pin, level, duration_ms, dry_run }`.
 
 ## 7.11 `pogo power` (requires probe)
 
@@ -316,6 +318,8 @@ The probe streams raw INA226 samples; the host converts and computes statistics.
 pogo probe info       # firmware version, protocol version, board, uptime, driven pins
 pogo probe selftest   # INA226 present, pins released correctly, I2C buses idle
 ```
+
+The probe is chosen with `--probe` (alias, USB serial, port, or `auto`; default the `probe` alias, else auto), never `--device`, and is locked like any device. `info` data: `{ fw_version, protocol_version, board, uptime_ms, driven_pins }` (`driven_pins` lists GP numbers). `selftest` reports checks `handshake`, `pins_released` (warn if any pin is still driven), `ina226` (a scan of bus 1 for `[power] ina226_addr`, default `0x40`; warn if absent), and `i2c_bus0` (a scan of bus 0; fail on a bus error), with `CHECK_FAILED` (exit 1) if any fails. Every probe command fails with `PROTOCOL` (exit 6) if the probe does not answer within 500 ms and `PROTOCOL_MISMATCH` (exit 6) on a major protocol version mismatch.
 
 ## 7.13 Utility commands
 

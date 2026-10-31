@@ -1,0 +1,5 @@
+{"type":"header","format":1,"pogo_version":"0.1.0","port":"/dev/cu.usbmodem2101","baud":115200}
+{"type":"rx","t_ms":0,"hex":"020107cf8ebd8205010705302e312e3000"}
+{"type":"rx","t_ms":1,"hex":"03020103b9600100"}
+{"type":"rx","t_ms":2,"hex":"0303040100"}
+{"type":"rx","t_ms":3,"hex":"0404080500"}

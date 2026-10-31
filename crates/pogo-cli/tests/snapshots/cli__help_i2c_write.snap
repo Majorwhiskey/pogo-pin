@@ -67,4 +67,4 @@ Examples:
 
 Exit codes: 0 ok, 3 probe not found, 6 probe I/O or NACK, 8 guardrail refused
 
-JSON data: { bus, addr, bytes_written }
+JSON data: { bus, addr, bytes_written, bytes_hex, dry_run }

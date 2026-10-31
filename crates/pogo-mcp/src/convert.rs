@@ -14,7 +14,8 @@ use rmcp::model::CallToolResult;
 use serde::Serialize;
 
 use crate::params::{
-    CaptureParams, FlashParams, LineEndingParam, ParserParam, SerialSendParams, TargetParams,
+    CaptureParams, FlashParams, LineEndingParam, ParserParam, ProbeTarget, SerialSendParams,
+    TargetParams,
 };
 
 /// MCP has no flags, so the config comes from `POGO_CONFIG` or the usual search.
@@ -22,8 +23,17 @@ pub fn selection(t: &TargetParams) -> Result<Selection, ErrorBody> {
     Ok(Selection {
         config: std::env::var_os("POGO_CONFIG").map(PathBuf::from),
         device: t.device.clone(),
+        probe: None,
         wait_lock: parse_duration(t.wait_lock.as_deref())?,
         replay: std::env::var_os("POGO_REPLAY").map(PathBuf::from),
+    })
+}
+
+pub fn probe_selection(t: &ProbeTarget) -> Result<Selection, ErrorBody> {
+    Ok(Selection {
+        probe: t.probe.clone(),
+        wait_lock: parse_duration(t.wait_lock.as_deref())?,
+        ..selection(&TargetParams::default())?
     })
 }
 

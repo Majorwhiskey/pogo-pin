@@ -4,6 +4,7 @@ pub mod config;
 pub mod devices;
 pub mod doctor;
 pub mod flash;
+pub mod probe;
 pub mod reset;
 pub mod run;
 pub mod schema;

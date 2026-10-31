@@ -47,7 +47,7 @@ fn unknown_command_exits_2_and_unimplemented_exits_1() {
             .unwrap()
             .contains("serial.capture")
     );
-    let v = stdout_json(&["schema", "i2c.scan", "-f", "json"], 1);
+    let v = stdout_json(&["schema", "power.measure", "-f", "json"], 1);
     assert_eq!(v["error"]["code"], "NOT_IMPLEMENTED");
 }
 
@@ -64,7 +64,15 @@ fn all_to_stdout_and_to_dir_match_committed() {
             "devices",
             "doctor",
             "flash",
+            "gpio.get",
+            "gpio.pulse",
+            "gpio.set",
+            "i2c.read",
+            "i2c.scan",
+            "i2c.write",
             "info",
+            "probe.info",
+            "probe.selftest",
             "reset",
             "run",
             "serial.capture",

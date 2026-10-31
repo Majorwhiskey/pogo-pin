@@ -135,6 +135,12 @@ fn tools_are_listed_without_erase() {
         "serial_capture",
         "serial_send",
         "run",
+        "i2c_scan",
+        "i2c_read",
+        "i2c_write",
+        "gpio_get",
+        "gpio_set",
+        "gpio_pulse",
     ] {
         assert!(names.contains(&want), "{want} missing from {names:?}");
     }
@@ -248,4 +254,29 @@ fn busy_device_fails_at_once_unless_wait_lock_is_given() {
     assert!(holder.wait().unwrap().success());
     let r = c.call("serial_capture", json!({ "wait_lock": "later" }));
     assert_eq!(r["structuredContent"]["error"]["code"], "USAGE");
+}
+
+#[test]
+fn probe_tools_match_the_cli_and_keep_guardrails() {
+    let replay = fixture("probe_scan");
+    let mut c = Client::start(&replay);
+    let mcp = c.call("i2c_scan", json!({}));
+    assert_eq!(mcp["isError"], false, "{mcp:#}");
+    let r = c.call("gpio_set", json!({ "pin": "target_en", "state": "low" }));
+    assert_eq!(r["structuredContent"]["error"]["code"], "GUARDRAIL_REFUSED");
+    let r = c.call("i2c_write", json!({ "addr": 0x50, "bytes": [0] }));
+    assert_eq!(r["structuredContent"]["error"]["code"], "GUARDRAIL_REFUSED");
+    drop(c);
+
+    let out = assert_cmd::Command::cargo_bin("pogo")
+        .unwrap()
+        .env_remove("POGO_CONFIG")
+        .env("POGO_REPLAY", &replay)
+        .args(["i2c", "scan", "--wait-lock", "30s", "-f", "json"])
+        .assert()
+        .code(0)
+        .get_output()
+        .clone();
+    let cli: Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(mcp["structuredContent"]["data"], cli["data"]);
 }

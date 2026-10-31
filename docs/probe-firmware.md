@@ -69,6 +69,8 @@ The host's first message on every connection is `Hello`. The probe answers with 
 - A hardware watchdog resets the probe if the main loop stalls; `panic-reset` does the same on panic. Both return pins to high-Z.
 - `PWR_EN` defaults to **on** at probe boot so the target behaves like a normal bench setup. This is documented in [hardware.md](hardware.md).
 
+**What the host relies on:** `GpioConfigure` with the mode a pin already has leaves its level unchanged (the host sends it before every `GpioSet` and `GpioPulse`, so a held `EN` line must not glitch); `GpioPulse` answers `Ok` after the pulse ends and then restores the pin's previous state; `GpioGet` answers `Level(Low)` or `Level(High)` for any allowed pin, configured or not; `Info.driven_pins` has bit n set while GPn is driven.
+
 ## 8.6 Firmware structure
 
 Embassy tasks: `usb_task` (CDC-ACM), `protocol_task` (decode, dispatch, encode), `power_task` (INA226 sampling into a channel), and a watchdog feeder. USB product string: `pogo-probe`. Use a pid.codes test PID during development and apply for a free one before publishing.

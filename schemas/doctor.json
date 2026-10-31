@@ -9,7 +9,7 @@
           ]
         },
         "id": {
-          "description": "Stable id: `config`, `devices`, `permissions`, `modemmanager`, `probe`, `open`.",
+          "description": "Stable id: `config`, `devices`, `permissions`, `modemmanager`, `probe`, `open`,\n`probe_firmware` (doctor); `handshake`, `pins_released`, `ina226`, `i2c_bus0`\n(probe selftest).",
           "type": "string"
         },
         "message": {

@@ -7,7 +7,7 @@ use super::usage;
 use crate::config::{self, Config, ConfigSearch, DeviceConfig};
 use crate::discovery::{self, DeviceKind, ResolvedDevice};
 use crate::envelope::ErrorBody;
-use crate::error::PogoError;
+use crate::error::{ErrorCode, PogoError};
 use crate::lock::{self, DeviceLock};
 use crate::serial::detect::DEFAULT_FAIL_ON;
 
@@ -20,6 +20,8 @@ pub struct Selection {
     pub config: Option<PathBuf>,
     /// `--device`: alias, USB serial, port, or `auto`.
     pub device: Option<String>,
+    /// `--probe`: the same forms, for commands that talk to the pogo probe.
+    pub probe: Option<String>,
     /// `--wait-lock`.
     pub wait_lock: Option<Duration>,
     /// `POGO_REPLAY`: a recorded session instead of a device (docs/testing.md).
@@ -92,35 +94,94 @@ pub fn config_search(explicit: Option<PathBuf>) -> Result<ConfigSearch, PogoErro
     })
 }
 
-/// Load config, resolve the device, and lock it for `command`.
+/// Load config, resolve the target device, and lock it for `command`.
 pub fn acquire(sel: &Selection, command: &str) -> Result<Target, ErrorBody> {
-    let loaded = config_search(sel.config.clone()).and_then(|s| config::load(&s))?;
+    let config = load_config(sel)?;
+    acquire_kind(
+        sel,
+        config,
+        sel.device.as_deref(),
+        DeviceKind::Esp32Target,
+        command,
+    )
+}
+
+/// Load config, resolve the pogo probe (`--probe`, default alias `probe`), and lock it.
+pub fn acquire_probe(sel: &Selection, config: Config, command: &str) -> Result<Target, ErrorBody> {
+    acquire_kind(
+        sel,
+        config,
+        sel.probe.as_deref(),
+        DeviceKind::PogoProbe,
+        command,
+    )
+}
+
+pub fn load_config(sel: &Selection) -> Result<Config, ErrorBody> {
+    Ok(config_search(sel.config.clone())
+        .and_then(|s| config::load(&s))?
+        .config)
+}
+
+fn acquire_kind(
+    sel: &Selection,
+    config: Config,
+    selector: Option<&str>,
+    kind: DeviceKind,
+    command: &str,
+) -> Result<Target, ErrorBody> {
+    let default_alias = match kind {
+        DeviceKind::PogoProbe => "probe",
+        _ => "target",
+    };
     let device = match &sel.replay {
         // A replay is any device; naming a config alias still applies that alias's settings.
         Some(path) => ResolvedDevice {
-            alias: sel
-                .device
-                .clone()
-                .filter(|d| loaded.config.devices.contains_key(d)),
+            alias: selector
+                .map(str::to_string)
+                .filter(|d| config.devices.contains_key(d)),
             port: format!("replay:{}", path.display()),
             usb_serial: None,
-            kind: DeviceKind::Esp32Target,
+            kind,
             usb_ids: None,
         },
         None => discovery::resolve(
-            sel.device.as_deref(),
-            "target",
-            DeviceKind::Esp32Target,
+            selector,
+            default_alias,
+            kind,
             discovery::enumerate()?,
-            &loaded.config,
-        )?,
+            &config,
+        )
+        .map_err(|e| probe_hint(ErrorBody::from(e), kind))?,
     };
     let key = device.usb_serial.as_deref().unwrap_or(&device.port);
     let lock = lock::lock_device(key, command, sel.wait_lock)?;
     Ok(Target {
-        config: loaded.config,
+        config,
         device,
         replay: sel.replay.clone(),
         _lock: lock,
     })
+}
+
+/// The generic selection hints name `--device`; a probe is chosen with `--probe`.
+fn probe_hint(mut e: ErrorBody, kind: DeviceKind) -> ErrorBody {
+    if kind != DeviceKind::PogoProbe {
+        return e;
+    }
+    match e.code {
+        ErrorCode::DeviceNotFound => {
+            e.message = e.message.replace("no device", "no pogo probe");
+            e.hint = Some(
+                "Connect the pogo probe (docs/hardware.md) and run `pogo devices`, then pass \
+                 --probe <alias|usb_serial|port>."
+                    .into(),
+            );
+        }
+        ErrorCode::AmbiguousDevice => {
+            e.hint = Some("Run `pogo devices` and pass --probe <alias|usb_serial|port>.".into());
+        }
+        _ => {}
+    }
+    e
 }

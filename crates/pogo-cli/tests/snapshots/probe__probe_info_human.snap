@@ -1,0 +1,6 @@
+---
+source: crates/pogo-cli/tests/probe.rs
+expression: "human(\"probe_info\", &[\"probe\", \"info\"])"
+---
+pogo probe 0.1.0 on rp2040, protocol 1.0, up 12.3s
+driven pins: GP2

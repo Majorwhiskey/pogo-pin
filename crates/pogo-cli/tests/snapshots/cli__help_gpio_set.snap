@@ -65,4 +65,4 @@ Examples:
 
 Exit codes: 0 ok, 3 probe not found, 6 probe I/O, 8 guardrail refused (incl. pin not declared)
 
-JSON data: { pin, probe_pin, state }
+JSON data: { pin, probe_pin, state, dry_run }

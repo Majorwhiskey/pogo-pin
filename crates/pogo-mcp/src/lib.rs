@@ -3,6 +3,7 @@
 
 mod convert;
 mod params;
+mod probe_tools;
 
 use rmcp::handler::server::router::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
@@ -30,7 +31,7 @@ pub struct PogoServer {
 impl Default for PogoServer {
     fn default() -> Self {
         PogoServer {
-            tool_router: Self::tool_router(),
+            tool_router: Self::tool_router() + Self::probe_router(),
         }
     }
 }
@@ -51,7 +52,7 @@ impl PogoServer {
             ports are accessible (Linux groups, ModemManager), and whether a pogo probe is \
             connected. Each check is pass, warn, or fail with a hint; any fail sets error \
             CHECK_FAILED. Read-only unless deep, which also opens each board's port (no \
-            reset).",
+            reset) and checks each probe's firmware with the protocol handshake.",
         annotations(read_only_hint = false, destructive_hint = false)
     )]
     async fn doctor(&self, Parameters(p): Parameters<DoctorParams>) -> CallToolResult {

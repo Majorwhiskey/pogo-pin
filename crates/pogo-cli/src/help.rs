@@ -153,7 +153,7 @@ Examples:
 
 Exit codes: 0 ok, 3 probe not found, 6 probe I/O or NACK, 8 guardrail refused
 
-JSON data: { bus, addr, bytes_written }";
+JSON data: { bus, addr, bytes_written, bytes_hex, dry_run }";
 
 pub const GPIO_GET: &str = "\
 Requires the probe. <PIN> is a name from the config's [pins] table.
@@ -176,7 +176,7 @@ Examples:
 
 Exit codes: 0 ok, 3 probe not found, 6 probe I/O, 8 guardrail refused (incl. pin not declared)
 
-JSON data: { pin, probe_pin, state }";
+JSON data: { pin, probe_pin, state, dry_run }";
 
 pub const GPIO_PULSE: &str = "\
 Requires the probe. The pulse is timed on the probe, so it is precise.
@@ -187,7 +187,7 @@ Examples:
 
 Exit codes: 0 ok, 3 probe not found, 6 probe I/O, 8 guardrail refused (incl. pin not declared)
 
-JSON data: { pin, probe_pin, level, duration_ms }";
+JSON data: { pin, probe_pin, level, duration_ms, dry_run }";
 
 pub const POWER_MEASURE: &str = "\
 Requires the probe and an INA226. The target must be powered through the shunt, not USB.

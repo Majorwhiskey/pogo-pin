@@ -13,6 +13,7 @@ pub fn selection(global: &GlobalArgs) -> Selection {
     Selection {
         config: global.config.clone(),
         device: global.device.clone(),
+        probe: global.probe.clone(),
         wait_lock: global.wait_lock,
         // Test hook: read a recorded session instead of a device (docs/testing.md).
         replay: std::env::var_os("POGO_REPLAY").map(PathBuf::from),
