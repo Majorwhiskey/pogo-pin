@@ -11,8 +11,8 @@ use rmcp::{ServerHandler, ServiceExt, tool, tool_handler, tool_router};
 
 use convert::{blocking, capture_request, flash_request, parse_duration, selection};
 use params::{
-    DeviceParams, FlashParams, ListDevicesParams, ResetModeParam, ResetParams, RunParams,
-    SerialCaptureParams, SerialSendParams,
+    DeviceParams, DoctorParams, FlashParams, ListDevicesParams, ResetModeParam, ResetParams,
+    RunParams, SerialCaptureParams, SerialSendParams,
 };
 use pogo_core::ops::{self, DEFAULT_CAPTURE_TIMEOUT, DEFAULT_SEND_TIMEOUT};
 
@@ -44,6 +44,19 @@ impl PogoServer {
     )]
     async fn list_devices(&self, Parameters(p): Parameters<ListDevicesParams>) -> CallToolResult {
         blocking(move || ops::devices::devices(None, p.all)).await
+    }
+
+    #[tool(
+        description = "Check the environment: config parses, boards are visible, serial \
+            ports are accessible (Linux groups, ModemManager), and whether a pogo probe is \
+            connected. Each check is pass, warn, or fail with a hint; any fail sets error \
+            CHECK_FAILED. Read-only unless deep, which also opens each board's port (no \
+            reset).",
+        annotations(read_only_hint = false, destructive_hint = false)
+    )]
+    async fn doctor(&self, Parameters(p): Parameters<DoctorParams>) -> CallToolResult {
+        let config = std::env::var_os("POGO_CONFIG").map(std::path::PathBuf::from);
+        blocking(move || ops::doctor::doctor(config, p.deep)).await
     }
 
     #[tool(

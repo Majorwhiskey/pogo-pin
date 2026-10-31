@@ -4,6 +4,7 @@
 
 pub mod capture;
 pub mod devices;
+pub mod doctor;
 pub mod flash;
 pub mod outcome;
 pub mod reset;

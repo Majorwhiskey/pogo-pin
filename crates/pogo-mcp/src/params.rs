@@ -11,6 +11,13 @@ pub struct ListDevicesParams {
 }
 
 #[derive(Debug, Default, Deserialize, JsonSchema)]
+pub struct DoctorParams {
+    /// Also open each board's serial port (without resetting it).
+    #[serde(default)]
+    pub deep: bool,
+}
+
+#[derive(Debug, Default, Deserialize, JsonSchema)]
 pub struct DeviceParams {
     /// Target device: config alias, USB serial number, port path, or "auto" (default:
     /// the "target" alias if configured, else auto; auto fails if several boards match).

@@ -128,6 +128,7 @@ fn tools_are_listed_without_erase() {
         .collect();
     for want in [
         "list_devices",
+        "doctor",
         "device_info",
         "flash",
         "reset",

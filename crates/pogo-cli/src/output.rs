@@ -97,7 +97,6 @@ impl Style {
     pub fn red(&self, text: &str) -> String {
         self.paint("31", text)
     }
-    #[expect(dead_code, reason = "used by commands implemented later in Phase 0")]
     pub fn green(&self, text: &str) -> String {
         self.paint("32", text)
     }

@@ -68,6 +68,7 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
             capture,
             no_flash,
         } => commands::run::run(&cli.global, &flash, &capture, no_flash, format, style),
+        Command::Doctor { deep } => commands::doctor::run(deep, cli.global.config, style),
         Command::Devices { all } => commands::devices::run(all, cli.global.config, style),
         Command::Config(cmd) => commands::config::run(&cmd, cli.global.config, style),
         Command::Schema { command, out, .. } => {

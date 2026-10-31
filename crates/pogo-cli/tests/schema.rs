@@ -62,6 +62,7 @@ fn all_to_stdout_and_to_dir_match_committed() {
             "config.show",
             "config.validate",
             "devices",
+            "doctor",
             "flash",
             "info",
             "reset",

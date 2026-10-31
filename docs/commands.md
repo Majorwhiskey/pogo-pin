@@ -63,6 +63,8 @@ pogo doctor [--deep]
 
 Runs environment checks and reports each as `pass`, `warn`, or `fail` with a hint: config parses, devices visible, port permissions (Linux group membership), ModemManager interference, probe present and firmware compatible. `--deep` also opens ports and performs the probe handshake.
 
+Check ids: `config`, `devices`, `permissions` and `modemmanager` (Linux only; left out elsewhere), `probe`, and with `--deep` one `open` check per board (its port is locked and opened without a reset). Probe firmware compatibility needs the probe handshake, which arrives with the probe in Phase 4. Warnings (no board, no probe, ModemManager running) do not fail the command. Exit codes: 0 when nothing failed; `CHECK_FAILED` (exit 1) when a check failed; `CONFIG_INVALID` (exit 10) when the config does not parse, with `data.checks` still reported.
+
 ```json
 "data": {
   "checks": [

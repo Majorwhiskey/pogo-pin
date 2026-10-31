@@ -1,0 +1,183 @@
+{
+  "$defs": {
+    "Check": {
+      "properties": {
+        "hint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Stable id: `config`, `devices`, `permissions`, `modemmanager`, `probe`, `open`.",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/CheckStatus"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "message"
+      ],
+      "type": "object"
+    },
+    "CheckStatus": {
+      "enum": [
+        "pass",
+        "warn",
+        "fail"
+      ],
+      "type": "string"
+    },
+    "DoctorData": {
+      "description": "`data` for `pogo doctor`. Checks that do not apply on this OS are left out.",
+      "properties": {
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/Check"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "checks"
+      ],
+      "type": "object"
+    },
+    "ErrorBody": {
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ErrorCode"
+        },
+        "details": true,
+        "hint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    },
+    "ErrorCode": {
+      "description": "Stable machine-readable error code. Serialized as `SCREAMING_SNAKE_CASE`.\n\nChanging a code's name or exit code is a breaking change to the agent contract.",
+      "oneOf": [
+        {
+          "enum": [
+            "INTERNAL",
+            "NOT_IMPLEMENTED",
+            "USAGE",
+            "DEVICE_NOT_FOUND",
+            "AMBIGUOUS_DEVICE",
+            "TIMEOUT",
+            "PERMISSION_DENIED",
+            "DEVICE_IO",
+            "PROTOCOL",
+            "PROTOCOL_MISMATCH",
+            "TARGET_FAULT",
+            "GUARDRAIL_REFUSED",
+            "DEVICE_BUSY",
+            "CONFIG_INVALID",
+            "INTERRUPTED"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "CHECK_FAILED",
+          "description": "`pogo doctor` found a failing check.",
+          "type": "string"
+        }
+      ]
+    },
+    "Warning": {
+      "description": "Something worth knowing that did not cause the command to fail.",
+      "properties": {
+        "code": {
+          "description": "Stable `SCREAMING_SNAKE_CASE` code, e.g. `OUTPUT_TRUNCATED`.",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "command": {
+      "description": "Dotted command name, e.g. `serial.capture`.",
+      "type": "string"
+    },
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DoctorData"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Command-specific result. May be present even when `ok` is false (partial results)."
+    },
+    "duration_ms": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ErrorBody"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ok": {
+      "description": "`true` only when the exit code is 0.",
+      "type": "boolean"
+    },
+    "pogo_version": {
+      "type": "string"
+    },
+    "schema_version": {
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/Warning"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "pogo_version",
+    "command",
+    "ok",
+    "duration_ms",
+    "warnings"
+  ],
+  "title": "pogo doctor envelope",
+  "type": "object"
+}

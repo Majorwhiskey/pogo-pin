@@ -61,7 +61,7 @@ Error example:
 | Code | Name | Meaning |
 |---|---|---|
 | 0 | `OK` | Success; for capture/run, an `--until` pattern matched (or capture completed with no `--until`) |
-| 1 | `INTERNAL` | Unexpected internal error or `NOT_IMPLEMENTED` |
+| 1 | `INTERNAL` / `NOT_IMPLEMENTED` / `CHECK_FAILED` | Unexpected internal error, a command not built yet, or a failing `pogo doctor` check |
 | 2 | `USAGE` | Invalid arguments (clap's default) |
 | 3 | `DEVICE_NOT_FOUND` / `AMBIGUOUS_DEVICE` | Device selection failed |
 | 4 | `TIMEOUT` | Deadline reached before the expected condition |

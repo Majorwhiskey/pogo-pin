@@ -2,6 +2,7 @@
 
 pub mod config;
 pub mod devices;
+pub mod doctor;
 pub mod flash;
 pub mod reset;
 pub mod run;

@@ -5,6 +5,7 @@ use serde_json::Value;
 
 use crate::config::{ConfigPathResult, ConfigShowResult, ConfigValidateResult};
 use crate::discovery::DevicesResult;
+use crate::doctor::DoctorData;
 use crate::envelope::Envelope;
 use crate::flash::{FlashData, InfoData};
 use crate::reset::ResetData;
@@ -15,6 +16,7 @@ use crate::serial::session::SerialCaptureData;
 /// Commands whose `data` shape is defined, in the order `schema --all` emits them.
 pub const COMMANDS_WITH_SCHEMA: &[&str] = &[
     "devices",
+    "doctor",
     "info",
     "flash",
     "reset",
@@ -30,6 +32,7 @@ pub const COMMANDS_WITH_SCHEMA: &[&str] = &[
 pub fn envelope_schema(command: &str) -> Option<Value> {
     let mut schema = match command {
         "devices" => schema_for!(Envelope<DevicesResult>),
+        "doctor" => schema_for!(Envelope<DoctorData>),
         "info" => schema_for!(Envelope<InfoData>),
         "flash" => schema_for!(Envelope<FlashData>),
         "reset" => schema_for!(Envelope<ResetData>),

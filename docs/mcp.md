@@ -26,7 +26,7 @@
 - Every tool takes an optional `timeout` and `device` argument with the same semantics as the CLI.
 - Errors return the same `{ code, message, hint }` object as the CLI.
 
-**Implemented (Phase 3):** `list_devices`, `device_info`, `flash`, `reset`, `serial_capture`, `serial_send`, and `run`. `doctor` and the probe tools (`i2c_*`, `gpio_*`, `power_*`) are added with their commands; until then they are not listed.
+**Implemented:** `list_devices`, `doctor`, `device_info`, `flash`, `reset`, `serial_capture`, `serial_send`, and `run`. The probe tools (`i2c_*`, `gpio_*`, `power_*`) are added with their commands in Phases 4–5; until then they are not listed.
 
 **Results:** every tool returns structured content `{ ok, data, error, warnings }`. `data` is exactly the CLI's `data` for the same operation (tests compare them), `error` is the CLI's `{ code, message, hint, details }`, and a result with an error is marked as a tool error. Partial data is kept, e.g. a `TARGET_FAULT` capture still carries its lines and `panic`.
 

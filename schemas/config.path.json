@@ -66,24 +66,33 @@
     },
     "ErrorCode": {
       "description": "Stable machine-readable error code. Serialized as `SCREAMING_SNAKE_CASE`.\n\nChanging a code's name or exit code is a breaking change to the agent contract.",
-      "enum": [
-        "INTERNAL",
-        "NOT_IMPLEMENTED",
-        "USAGE",
-        "DEVICE_NOT_FOUND",
-        "AMBIGUOUS_DEVICE",
-        "TIMEOUT",
-        "PERMISSION_DENIED",
-        "DEVICE_IO",
-        "PROTOCOL",
-        "PROTOCOL_MISMATCH",
-        "TARGET_FAULT",
-        "GUARDRAIL_REFUSED",
-        "DEVICE_BUSY",
-        "CONFIG_INVALID",
-        "INTERRUPTED"
-      ],
-      "type": "string"
+      "oneOf": [
+        {
+          "enum": [
+            "INTERNAL",
+            "NOT_IMPLEMENTED",
+            "USAGE",
+            "DEVICE_NOT_FOUND",
+            "AMBIGUOUS_DEVICE",
+            "TIMEOUT",
+            "PERMISSION_DENIED",
+            "DEVICE_IO",
+            "PROTOCOL",
+            "PROTOCOL_MISMATCH",
+            "TARGET_FAULT",
+            "GUARDRAIL_REFUSED",
+            "DEVICE_BUSY",
+            "CONFIG_INVALID",
+            "INTERRUPTED"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "CHECK_FAILED",
+          "description": "`pogo doctor` found a failing check.",
+          "type": "string"
+        }
+      ]
     },
     "Warning": {
       "description": "Something worth knowing that did not cause the command to fail.",
