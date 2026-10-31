@@ -5,7 +5,7 @@ use std::time::Duration;
 use super::capture::Live;
 use super::outcome::{outcome_error, symbolize_panic};
 use super::target::{Selection, acquire};
-use super::{OpResult, usage};
+use super::{DEFAULT_SEND_TIMEOUT, OpResult, usage};
 use crate::audit::{self, AuditEntry};
 use crate::config::ParserName;
 use crate::deadline::Deadline;
@@ -24,10 +24,11 @@ pub struct SendRequest {
     pub expect: Option<String>,
 }
 
+/// `timeout`: `None` means the config's `defaults.timeout`, else 5 s.
 pub fn serial_send(
     sel: &Selection,
     req: &SendRequest,
-    timeout: Duration,
+    timeout: Option<Duration>,
     live: Live,
 ) -> OpResult<SerialSendData> {
     let expect: Vec<String> = req.expect.iter().cloned().collect();
@@ -39,6 +40,7 @@ pub fn serial_send(
         Ok(t) => t,
         Err(e) => return OpResult::fail(e),
     };
+    let timeout = target.timeout(timeout, DEFAULT_SEND_TIMEOUT);
     let deadline = Deadline::after(timeout);
     let fail_on = match compile_patterns(&target.fail_on(true, &[]), "fail_on") {
         Ok(f) => f,

@@ -124,10 +124,15 @@ pub fn flash_target(
     }
     target.require_hardware()?;
     let d = &target.device;
+    // An explicit chip, else the device's configured one, else auto-detect.
+    let chip = p
+        .chip
+        .clone()
+        .or_else(|| target.device_config().and_then(|c| c.chip.clone()));
     let result = EspFlasher::connect(
         &d.port,
         d.usb_ids,
-        p.chip.as_deref(),
+        chip.as_deref(),
         p.flash_baud,
         p.opts.verify,
     )

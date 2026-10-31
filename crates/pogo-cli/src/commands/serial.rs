@@ -3,7 +3,6 @@
 use std::io::Write;
 
 use pogo_core::config::ParserName;
-use pogo_core::ops::DEFAULT_CAPTURE_TIMEOUT;
 use pogo_core::ops::capture::{CaptureRequest, Live, serial_capture};
 use pogo_core::serial::LogLine;
 use pogo_core::serial::session::SerialCaptureData;
@@ -20,13 +19,12 @@ pub fn capture(
     format: Format,
     style: &Style,
 ) -> Reply {
-    let timeout = global.timeout.unwrap_or(DEFAULT_CAPTURE_TIMEOUT);
     let mut stream = |line: &LogLine| stream_line(format, line);
     let result = serial_capture(
         &selection(global),
         &capture_request(args),
         reset,
-        timeout,
+        global.timeout,
         live(&mut stream),
     );
     reply(result, style)
@@ -41,7 +39,7 @@ pub fn capture_request(args: &CaptureArgs) -> CaptureRequest {
         settle: args.settle,
         max_lines: args.max_lines,
         max_line_len: args.max_line_len,
-        parser: parser_name(args.parser),
+        parser: args.parser.map(parser_name),
         elf: args.elf.clone(),
         raw: args.raw,
         record: args.record.clone(),

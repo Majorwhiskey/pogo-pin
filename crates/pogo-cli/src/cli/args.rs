@@ -66,9 +66,9 @@ pub struct CaptureArgs {
     /// Maximum characters per line; longer lines are truncated
     #[arg(long, value_name = "N", default_value_t = 1000)]
     pub max_line_len: usize,
-    /// Log line parser
-    #[arg(long, value_enum, default_value_t = LogParser::Auto)]
-    pub parser: LogParser,
+    /// Log line parser [default: the device's config, else auto]
+    #[arg(long, value_enum)]
+    pub parser: Option<LogParser>,
     /// ELF used to symbolize backtraces
     #[arg(long, value_name = "PATH")]
     pub elf: Option<PathBuf>,

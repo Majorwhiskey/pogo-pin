@@ -2,6 +2,13 @@
 
 **Discovery order** (later wins on conflicts): user config (`~/.config/pogo/config.toml` or the platform equivalent) → nearest `pogo.toml` walking up from the current directory → `POGO_CONFIG` → `--config`. `pogo config show` displays the merged result and where each value came from.
 
+**How settings apply:** a flag (or MCP argument) wins, then the config, then the built-in default.
+
+- `defaults.format`: output format when neither `-f` nor `POGO_FORMAT` is given.
+- `defaults.timeout`: the timeout for commands that take one when `--timeout` is not given (instead of 10 s for capture/run, 5 s for send).
+- `defaults.baud`: serial baud rate when `--baud` is not given.
+- `devices.<alias>.*` applies when that device is the one selected (by `--device <alias>`, or because the config's `target` alias matched): `chip` skips chip detection when flashing, `parser` is the log parser when `--parser` is not given, `elf` symbolizes panics when `--elf` is not given (relative paths are relative to the config file), and `reset = "probe"` makes resets fail with `NOT_IMPLEMENTED` until the probe exists (Phase 4); `auto` and `dtr-rts` use DTR/RTS.
+
 ```toml
 # pogo.toml
 schema = 1

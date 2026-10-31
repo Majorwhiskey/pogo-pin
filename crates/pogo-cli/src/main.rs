@@ -24,7 +24,11 @@ fn main() -> ExitCode {
         Err(err) => return usage_error(err, &args, start),
     };
 
-    let format = cli.global.format.unwrap_or(Format::Human);
+    let format = cli
+        .global
+        .format
+        .or_else(|| config_format(cli.global.config.clone()))
+        .unwrap_or(Format::Human);
     let style = Style::detect(format, cli.global.no_color);
     init_logging(cli.global.verbose, cli.global.quiet, style);
 
@@ -162,6 +166,19 @@ fn format_from_raw_args(args: &[OsString]) -> Option<Format> {
         }
     }
     std::env::var("POGO_FORMAT").ok().as_deref().and_then(parse)
+}
+
+/// The config's `defaults.format`. A config that does not load is ignored here; the
+/// command reports it.
+fn config_format(explicit: Option<std::path::PathBuf>) -> Option<Format> {
+    use pogo_core::config::OutputFormat;
+    let search = pogo_core::ops::target::config_search(explicit).ok()?;
+    let loaded = pogo_core::config::load(&search).ok()?;
+    Some(match loaded.config.defaults.format? {
+        OutputFormat::Human => Format::Human,
+        OutputFormat::Json => Format::Json,
+        OutputFormat::Jsonl => Format::Jsonl,
+    })
 }
 
 fn init_logging(verbose: u8, quiet: bool, style: Style) {

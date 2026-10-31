@@ -100,9 +100,8 @@ pub struct CaptureParams {
     pub settle: Option<String>,
     /// Maximum lines returned (default 500); the excess is dropped from the middle.
     pub max_lines: Option<usize>,
-    /// Log line parser (default "auto").
-    #[serde(default)]
-    pub parser: ParserParam,
+    /// Log line parser (default: the device's configured parser, else "auto").
+    pub parser: Option<ParserParam>,
     /// ELF used to turn panic backtrace addresses into function, file, and line.
     pub elf: Option<String>,
     /// Baud rate (default: config, else 115200).
@@ -117,7 +116,7 @@ pub struct SerialCaptureParams {
     /// then reported as an unexpected reboot. Without it the target is not touched.
     #[serde(default)]
     pub reset: bool,
-    /// Overall deadline, e.g. "10s" (default 10s).
+    /// Overall deadline, e.g. "10s" (default: config defaults.timeout, else 10s).
     pub timeout: Option<String>,
     /// Target device (see list_devices).
     pub device: Option<String>,
@@ -145,7 +144,7 @@ pub struct SerialSendParams {
     /// Capture until a reply line matches this regex (with fail-on detection). Without
     /// it nothing is read back.
     pub expect: Option<String>,
-    /// Deadline for the reply, e.g. "5s" (default 5s).
+    /// Deadline for the reply, e.g. "5s" (default: config defaults.timeout, else 5s).
     pub timeout: Option<String>,
     /// Target device (see list_devices).
     pub device: Option<String>,
@@ -165,7 +164,7 @@ pub struct RunParams {
     /// Report the flash plan without touching the device.
     #[serde(default)]
     pub dry_run: bool,
-    /// Capture deadline after flashing, e.g. "10s" (default 10s).
+    /// Capture deadline after flashing, e.g. "10s" (default: config defaults.timeout, else 10s).
     pub timeout: Option<String>,
     /// Target device (see list_devices).
     pub device: Option<String>,

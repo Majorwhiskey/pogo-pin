@@ -1,6 +1,5 @@
 //! `pogo run`: flash, reset, and capture from the first boot byte, under one lock.
 
-use pogo_core::ops::DEFAULT_CAPTURE_TIMEOUT;
 use pogo_core::ops::run;
 use pogo_core::run::RunData;
 use pogo_core::serial::LogLine;
@@ -20,14 +19,13 @@ pub fn run(
     style: &Style,
 ) -> Reply {
     let flash = (!no_flash).then(|| flash_request(flash_args));
-    let timeout = global.timeout.unwrap_or(DEFAULT_CAPTURE_TIMEOUT);
     let mut stream = |line: &LogLine| stream_line(format, line);
     let result = run::run(
         &selection(global),
         flash.as_ref(),
         &capture_request(capture_args),
         global.dry_run,
-        timeout,
+        global.timeout,
         live(&mut stream),
     );
     reply(result, style)

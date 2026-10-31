@@ -36,9 +36,8 @@ Options:
           [default: 1000]
 
       --parser <PARSER>
-          Log line parser
+          Log line parser [default: the device's config, else auto]
           
-          [default: auto]
           [possible values: auto, esp-idf, rust-log, raw]
 
       --elf <PATH>

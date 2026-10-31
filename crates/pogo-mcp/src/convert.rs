@@ -29,15 +29,16 @@ fn usage(msg: impl Into<String>) -> ErrorBody {
     ErrorBody::new(ErrorCode::Usage, msg)
 }
 
-pub fn parse_duration(s: Option<&str>, default: Duration) -> Result<Duration, ErrorBody> {
-    match s {
-        None => Ok(default),
-        Some(s) => humantime::parse_duration(s).map_err(|e| {
+/// `None` when absent, so the core can apply the config's default.
+pub fn parse_duration(s: Option<&str>) -> Result<Option<Duration>, ErrorBody> {
+    s.map(|s| {
+        humantime::parse_duration(s).map_err(|e| {
             usage(format!(
                 "invalid duration '{s}': {e}; use forms like 500ms, 10s"
             ))
-        }),
-    }
+        })
+    })
+    .transpose()
 }
 
 fn parse_address(s: &str) -> Result<u32, ErrorBody> {
@@ -69,18 +70,14 @@ pub fn capture_request(c: &CaptureParams) -> Result<CaptureRequest, ErrorBody> {
         until: c.until.clone(),
         fail_on: c.fail_on.clone(),
         no_default_fail_patterns: c.no_default_fail_patterns,
-        settle: c
-            .settle
-            .as_deref()
-            .map(|s| parse_duration(Some(s), Duration::ZERO))
-            .transpose()?,
+        settle: parse_duration(c.settle.as_deref())?,
         max_lines: c.max_lines.unwrap_or(defaults.max_lines),
-        parser: match c.parser {
+        parser: c.parser.map(|p| match p {
             ParserParam::Auto => ParserName::Auto,
             ParserParam::EspIdf => ParserName::EspIdf,
             ParserParam::RustLog => ParserName::RustLog,
             ParserParam::Raw => ParserName::Raw,
-        },
+        }),
         elf: c.elf.as_ref().map(PathBuf::from),
         ..defaults
     })

@@ -2,7 +2,6 @@
 
 use std::io::Read;
 
-use pogo_core::ops::DEFAULT_SEND_TIMEOUT;
 use pogo_core::ops::send::{SendRequest, serial_send};
 use pogo_core::serial::LogLine;
 use pogo_core::serial::send::{SerialSendData, parse_hex};
@@ -34,9 +33,8 @@ pub fn send(global: &GlobalArgs, args: SendArgs, format: Format, style: &Style) 
         bytes,
         expect: args.expect.map(str::to_string),
     };
-    let timeout = global.timeout.unwrap_or(DEFAULT_SEND_TIMEOUT);
     let mut stream = |line: &LogLine| stream_line(format, line);
-    let result = serial_send(&selection(global), &req, timeout, live(&mut stream));
+    let result = serial_send(&selection(global), &req, global.timeout, live(&mut stream));
     reply(result, style)
 }
 

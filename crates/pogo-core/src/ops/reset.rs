@@ -5,6 +5,7 @@ use std::time::Duration;
 use super::OpResult;
 use super::target::{Selection, acquire};
 use crate::audit::{self, AuditEntry};
+use crate::config::ResetMode as ConfigResetMode;
 use crate::envelope::Warning;
 use crate::error::PogoError;
 use crate::reset::{
@@ -42,6 +43,12 @@ pub fn reset(
         Ok(t) => t,
         Err(e) => return OpResult::fail(e),
     };
+    // `auto` follows the device's configured reset method.
+    if via == ResetVia::Auto
+        && target.device_config().and_then(|d| d.reset) == Some(ConfigResetMode::Probe)
+    {
+        return PogoError::NotImplemented("reset via probe").into();
+    }
     let mode_name = match mode {
         ResetMode::Run => "run",
         ResetMode::Bootloader => "bootloader",

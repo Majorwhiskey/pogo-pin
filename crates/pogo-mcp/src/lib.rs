@@ -14,7 +14,7 @@ use params::{
     DeviceParams, DoctorParams, FlashParams, ListDevicesParams, ResetModeParam, ResetParams,
     RunParams, SerialCaptureParams, SerialSendParams,
 };
-use pogo_core::ops::{self, DEFAULT_CAPTURE_TIMEOUT, DEFAULT_SEND_TIMEOUT};
+use pogo_core::ops;
 
 const INSTRUCTIONS: &str = "pogo drives ESP32 boards on this machine: list them, flash \
 firmware, reset, capture serial output until a pattern or a crash, and send commands. \
@@ -117,12 +117,9 @@ impl PogoServer {
         Parameters(p): Parameters<SerialCaptureParams>,
     ) -> CallToolResult {
         let sel = selection(p.device.clone());
-        let (req, timeout) = match capture_request(&p.capture).and_then(|req| {
-            Ok((
-                req,
-                parse_duration(p.timeout.as_deref(), DEFAULT_CAPTURE_TIMEOUT)?,
-            ))
-        }) {
+        let (req, timeout) = match capture_request(&p.capture)
+            .and_then(|req| Ok((req, parse_duration(p.timeout.as_deref())?)))
+        {
             Ok(r) => r,
             Err(e) => return convert::fail(e),
         };
@@ -146,12 +143,8 @@ impl PogoServer {
     )]
     async fn serial_send(&self, Parameters(p): Parameters<SerialSendParams>) -> CallToolResult {
         let sel = selection(p.device.clone());
-        let parsed = convert::send_request(&p).and_then(|req| {
-            Ok((
-                req,
-                parse_duration(p.timeout.as_deref(), DEFAULT_SEND_TIMEOUT)?,
-            ))
-        });
+        let parsed = convert::send_request(&p)
+            .and_then(|req| Ok((req, parse_duration(p.timeout.as_deref())?)));
         let (req, timeout) = match parsed {
             Ok(r) => r,
             Err(e) => return convert::fail(e),
@@ -183,11 +176,7 @@ impl PogoServer {
         };
         let parsed = flash_request(&flash_params).and_then(|f| {
             let c = capture_request(&p.capture)?;
-            Ok((
-                f,
-                c,
-                parse_duration(p.timeout.as_deref(), DEFAULT_CAPTURE_TIMEOUT)?,
-            ))
+            Ok((f, c, parse_duration(p.timeout.as_deref())?))
         });
         let (flash, capture, timeout) = match parsed {
             Ok(r) => r,

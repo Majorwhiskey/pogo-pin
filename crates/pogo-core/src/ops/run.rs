@@ -2,21 +2,22 @@
 
 use std::time::Duration;
 
-use super::OpResult;
 use super::capture::{CaptureRequest, Live, capture_locked, check_patterns};
 use super::flash::{FlashRequest, flash_target, prepare};
 use super::outcome::{outcome_error, symbolize_panic};
 use super::target::{Selection, acquire};
+use super::{DEFAULT_CAPTURE_TIMEOUT, OpResult};
 use crate::flash::FlashImage;
 use crate::run::RunData;
 
-/// `flash` is `None` for `--no-flash`.
+/// `flash` is `None` for `--no-flash`. `timeout` (the capture's): `None` means the
+/// config's `defaults.timeout`, else 10 s.
 pub fn run(
     sel: &Selection,
     flash: Option<&FlashRequest>,
     capture: &CaptureRequest,
     dry_run: bool,
-    timeout: Duration,
+    timeout: Option<Duration>,
     live: Live,
 ) -> OpResult<RunData> {
     if let Err(e) = check_patterns(capture) {
@@ -53,6 +54,7 @@ pub fn run(
         return OpResult::ok(data).with_warnings(warnings);
     }
 
+    let timeout = target.timeout(timeout, DEFAULT_CAPTURE_TIMEOUT);
     let done = match capture_locked(&target, capture, true, timeout, live) {
         Ok(d) => d,
         Err(e) => return OpResult::fail(e).with_warnings(warnings),

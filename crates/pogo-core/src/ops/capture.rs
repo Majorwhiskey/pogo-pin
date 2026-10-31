@@ -8,10 +8,11 @@ use std::time::Duration;
 
 use super::outcome::{outcome_error, symbolize_panic};
 use super::target::{Selection, Target, acquire};
-use super::{OpResult, usage};
-use crate::config::ParserName;
+use super::{DEFAULT_CAPTURE_TIMEOUT, OpResult, usage};
+use crate::config::{ParserName, ResetMode as ConfigResetMode};
 use crate::deadline::Deadline;
 use crate::envelope::ErrorBody;
+use crate::error::PogoError;
 use crate::serial::capture::CaptureOptions;
 use crate::serial::session::{
     SerialCaptureData, SessionOptions, SessionOutput, capture_device, capture_on, compile_patterns,
@@ -29,7 +30,8 @@ pub struct CaptureRequest {
     pub settle: Option<Duration>,
     pub max_lines: usize,
     pub max_line_len: usize,
-    pub parser: ParserName,
+    /// `None`: the device's configured parser, else `auto`.
+    pub parser: Option<ParserName>,
     pub elf: Option<PathBuf>,
     pub raw: bool,
     pub record: Option<PathBuf>,
@@ -46,7 +48,7 @@ impl Default for CaptureRequest {
             settle: None,
             max_lines: 500,
             max_line_len: 1000,
-            parser: ParserName::Auto,
+            parser: None,
             elf: None,
             raw: false,
             record: None,
@@ -61,11 +63,12 @@ pub struct Live<'a> {
     pub cancel: Option<Arc<AtomicBool>>,
 }
 
+/// `timeout`: `None` means the config's `defaults.timeout`, else 10 s.
 pub fn serial_capture(
     sel: &Selection,
     req: &CaptureRequest,
     reset: bool,
-    timeout: Duration,
+    timeout: Option<Duration>,
     live: Live,
 ) -> OpResult<SerialCaptureData> {
     if let Err(e) = check_patterns(req) {
@@ -75,6 +78,7 @@ pub fn serial_capture(
         Ok(t) => t,
         Err(e) => return OpResult::fail(e),
     };
+    let timeout = target.timeout(timeout, DEFAULT_CAPTURE_TIMEOUT);
     match capture_locked(&target, req, reset, timeout, live) {
         Ok(done) => {
             let error = outcome_error(&done.out.data.capture, &req.until, timeout, done.reconnect);
@@ -109,6 +113,9 @@ pub fn capture_locked(
     timeout: Duration,
     live: Live,
 ) -> Result<CaptureDone, ErrorBody> {
+    if reset && target.device_config().and_then(|d| d.reset) == Some(ConfigResetMode::Probe) {
+        return Err(PogoError::NotImplemented("reset via probe").into());
+    }
     let deadline = Deadline::after(timeout);
     let until = compile_patterns(&req.until, "until").map_err(usage)?;
     let fail_on = target.fail_on(!req.no_default_fail_patterns, &req.fail_on);
@@ -127,7 +134,10 @@ pub fn capture_locked(
         settle: req.settle.unwrap_or(Duration::ZERO),
         max_lines: req.max_lines,
         decode: DecodeOptions {
-            parser: req.parser,
+            parser: req
+                .parser
+                .or(target.device_config().and_then(|d| d.parser))
+                .unwrap_or(ParserName::Auto),
             keep_ansi: req.raw,
             max_line_len: req.max_line_len,
         },

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use super::usage;
-use crate::config::{self, Config, ConfigSearch};
+use crate::config::{self, Config, ConfigSearch, DeviceConfig};
 use crate::discovery::{self, DeviceKind, ResolvedDevice};
 use crate::envelope::ErrorBody;
 use crate::error::PogoError;
@@ -35,6 +35,18 @@ pub struct Target {
 }
 
 impl Target {
+    /// The config entry for the device's alias, if it has one.
+    pub fn device_config(&self) -> Option<&DeviceConfig> {
+        self.config.devices.get(self.device.alias.as_ref()?)
+    }
+
+    /// The explicit timeout, else the config's `defaults.timeout`, else `default`.
+    pub fn timeout(&self, explicit: Option<Duration>, default: Duration) -> Duration {
+        explicit
+            .or(self.config.defaults.timeout.map(|t| t.0))
+            .unwrap_or(default)
+    }
+
     /// Replays stand in for serial I/O only; flashing needs a real device.
     pub fn require_hardware(&self) -> Result<(), ErrorBody> {
         match &self.replay {
@@ -84,8 +96,12 @@ pub fn config_search(explicit: Option<PathBuf>) -> Result<ConfigSearch, PogoErro
 pub fn acquire(sel: &Selection, command: &str) -> Result<Target, ErrorBody> {
     let loaded = config_search(sel.config.clone()).and_then(|s| config::load(&s))?;
     let device = match &sel.replay {
+        // A replay is any device; naming a config alias still applies that alias's settings.
         Some(path) => ResolvedDevice {
-            alias: None,
+            alias: sel
+                .device
+                .clone()
+                .filter(|d| loaded.config.devices.contains_key(d)),
             port: format!("replay:{}", path.display()),
             usb_serial: None,
             kind: DeviceKind::Esp32Target,
