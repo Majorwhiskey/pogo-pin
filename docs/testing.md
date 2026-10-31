@@ -44,6 +44,6 @@ cargo insta review                           # review snapshot changes
 POGO_HIL=1 cargo test -p pogo-cli --test hil -- --test-threads=1
 ```
 
-HIL tests are skipped unless `POGO_HIL=1` is set, and they always run single-threaded.
+HIL tests are skipped unless `POGO_HIL=1` is set, and they always run single-threaded. They live in `crates/pogo-cli/tests/hil.rs` and need one ESP32 connected (or `POGO_HIL_DEVICE=<selector>`) and the test firmware built (`cargo build --release` in `firmware/test-target`); with `POGO_HIL=1` and no firmware they fail with that instruction. Each test first makes sure the board is at `READY`, flashing the firmware if needed, so they do not depend on order. Covered: `run` flashes and reaches `READY` with one boot; `ping`/`pong`; the planted panic is reported at `src/main.rs:77` and symbolized to `trigger_panic`; `reset --mode bootloader` stops the app and `reset` restarts it; opening the port never resets the board; `info` and `doctor --deep`. They take about 30 s on an ESP32-WROOM-32 devkit.
 
 [Back to README](../README.md)
