@@ -16,10 +16,14 @@ fn fixture(name: &str) -> String {
     )
 }
 
+/// A fresh file per call: tests run in parallel, and rewriting a shared path lets one
+/// test read another's half-written file.
 fn scratch_file(name: &str, bytes: &[u8]) -> PathBuf {
+    use std::sync::atomic::{AtomicU32, Ordering};
+    static N: AtomicU32 = AtomicU32::new(0);
     let dir = std::env::temp_dir().join(format!("pogo-flash-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
-    let path = dir.join(name);
+    let path = dir.join(format!("{}-{name}", N.fetch_add(1, Ordering::SeqCst)));
     std::fs::write(&path, bytes).unwrap();
     path
 }
