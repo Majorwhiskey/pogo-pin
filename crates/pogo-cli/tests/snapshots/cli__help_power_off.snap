@@ -57,4 +57,4 @@ Examples:
 
 Exit codes: 0 ok, 3 probe not found, 6 probe I/O, 8 guardrail refused
 
-JSON data: { on }
+JSON data: { on, dry_run }

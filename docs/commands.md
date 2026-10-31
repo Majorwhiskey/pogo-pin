@@ -135,7 +135,7 @@ pogo reset [--mode run|bootloader] [--via auto|dtr-rts|probe]
 
 `auto` uses the probe when `target_en`/`target_boot` pins are configured and the probe is connected, otherwise DTR/RTS toggling. Waits for re-enumeration on native USB boards.
 
-Until the probe exists (Phase 4), `auto` means `dtr-rts` and `--via probe` returns `NOT_IMPLEMENTED`. The DTR/RTS sequences follow esptool's hard reset (run) and classic reset (bootloader); native USB-Serial-JTAG boards use esptool's USB-JTAG sequence. After a reset of a native USB board, pogo waits up to 1s for it to drop off USB and up to 5s for it to return; `reconnected` reports whether it did.
+`--via probe` drives the config's `[pins.target_en]` (and `[pins.target_boot]` for bootloader mode) with esptool's classic timings: `run` releases BOOT and pulses EN low for 100 ms; `bootloader` holds BOOT low, pulses EN low for 100 ms, waits 50 ms, and releases BOOT (BOOT is released even if the pulse fails). Missing pins are `CONFIG_INVALID` (exit 10); the pins' GPIO guardrails apply. `auto` uses the probe when the device's config says `reset = "probe"` (then a probe is required) or when the reset pins are declared and a probe is connected; otherwise it uses DTR/RTS. `serial capture --reset` and `run` still reset with DTR/RTS and return `NOT_IMPLEMENTED` for a device configured with `reset = "probe"`. The DTR/RTS sequences follow esptool's hard reset (run) and classic reset (bootloader); native USB-Serial-JTAG boards use esptool's USB-JTAG sequence. After a reset of a native USB board, pogo waits up to 1s for it to drop off USB and up to 5s for it to return; `reconnected` reports whether it did.
 
 ```json
 "data": { "device": { ... }, "mode": "run", "via": "dtr-rts", "reconnected": false, "dry_run": false }
@@ -298,7 +298,9 @@ pogo power on | off
 pogo power cycle [--off-time 500ms]
 ```
 
-The probe streams raw INA226 samples; the host converts and computes statistics.
+The probe streams raw INA226 samples; the host converts and computes statistics. Current is shunt voltage (2.5 µV per LSB) over `[power] shunt_ohms` (default 0.1 Ω), bus voltage is 1.25 mV per LSB, `p50`/`p95` are nearest-rank percentiles, and `energy_mj` sums bus voltage × current × interval over the samples received. `--interval` is 100 µs to 1 s, and a run is at most 10 million samples. `dropped` counts samples the probe reported dropping plus any that never arrived. `--out` writes one CSV row per sample: `index,t_ms,shunt_raw,bus_raw,current_ma,bus_voltage_v`. The deadline is `--duration` + 2 s; if it passes, pogo sends `PowerStop` and fails with `PROTOCOL`. A probe that is already measuring answers `DEVICE_BUSY` (exit 9). In `jsonl` mode only the result line is emitted for now.
+
+`on`, `off`, and `cycle` drive the probe's load switch (`PowerSwitch`). Before power goes back on, pogo checks that it has been off for at least `[guardrails] min_power_off_time` (default 200 ms; `cycle --off-time` below it is refused) and that fewer than `max_power_cycles_per_minute` (default 10) off-to-on cycles happened in the last minute; otherwise `GUARDRAIL_REFUSED` (exit 8). That history is kept per probe beside its lock file, so it holds across separate commands. All three support `--dry-run` (the probe is resolved but not contacted) and are audited. If `cycle` cannot switch power back on, the error says power is off. Data: `measure` adds `interval_us` to the shape below; `on`/`off` `{ on, dry_run }`; `cycle` `{ off_time_ms, dry_run }`.
 
 ```json
 "data": {

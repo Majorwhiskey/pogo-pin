@@ -10,7 +10,7 @@ use std::process::ExitCode;
 use std::time::Instant;
 
 use clap::{CommandFactory, Parser};
-use pogo_core::{ErrorBody, ErrorCode, PogoError};
+use pogo_core::{ErrorBody, ErrorCode};
 
 use crate::cli::{Cli, Command, SerialCommand};
 use crate::output::{Format, Printer, Reply, Style};
@@ -72,6 +72,7 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
             capture,
             no_flash,
         } => commands::run::run(&cli.global, &flash, &capture, no_flash, format, style),
+        Command::Power(cmd) => commands::power::run(&cli.global, &cmd, style),
         Command::Probe(cmd) => commands::probe::probe(&cli.global, &cmd, style),
         Command::Gpio(cmd) => commands::probe::gpio(&cli.global, &cmd, style),
         Command::I2c(cmd) => commands::probe::i2c(&cli.global, &cmd, style),
@@ -105,7 +106,6 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
             // The script is the output; there is no envelope.
             std::process::exit(0);
         }
-        other => Reply::error(PogoError::NotImplemented(other.name())),
     }
 }
 

@@ -78,13 +78,23 @@ impl<T: Transport> ProbeClient<T> {
     /// Send one request and wait for the response carrying its `seq`. Responses to earlier
     /// requests (late arrivals) are skipped.
     pub fn request(&mut self, body: Request, timeout: Duration) -> Result<Response, PogoError> {
-        self.seq = self.seq.wrapping_add(1);
-        let seq = self.seq;
-        let mut buf = [0u8; MAX_FRAME];
-        let bytes = encode(&Frame { seq, body }, &mut buf)
-            .map_err(|e| PogoError::Protocol(format!("cannot encode request: {e:?}")))?;
-        self.t.write_all(bytes)?;
+        let mut first = None;
+        self.request_stream(body, timeout, |r| {
+            first = Some(r);
+            Ok(true)
+        })?;
+        first.ok_or_else(|| PogoError::Internal("stream ended without a response".into()))
+    }
 
+    /// Send one request and pass each response carrying its `seq` to `on` until it returns
+    /// `true` (done). `timeout` bounds the whole exchange, not each response.
+    pub fn request_stream(
+        &mut self,
+        body: Request,
+        timeout: Duration,
+        mut on: impl FnMut(Response) -> Result<bool, PogoError>,
+    ) -> Result<(), PogoError> {
+        let seq = self.send(body)?;
         let deadline = Deadline::after(timeout);
         let mut chunk = [0u8; 64];
         loop {
@@ -102,11 +112,22 @@ impl<T: Transport> ProbeClient<T> {
                 let frame = frame
                     .and_then(decode::<Response>)
                     .map_err(|e| PogoError::Protocol(format!("bad frame from probe: {e:?}")))?;
-                if frame.seq == seq {
-                    return Ok(frame.body);
+                if frame.seq == seq && on(frame.body)? {
+                    return Ok(());
                 }
             }
         }
+    }
+
+    /// Send a request without waiting for its answer; returns its `seq`.
+    pub fn send(&mut self, body: Request) -> Result<u16, PogoError> {
+        self.seq = self.seq.wrapping_add(1);
+        let seq = self.seq;
+        let mut buf = [0u8; MAX_FRAME];
+        let bytes = encode(&Frame { seq, body }, &mut buf)
+            .map_err(|e| PogoError::Protocol(format!("cannot encode request: {e:?}")))?;
+        self.t.write_all(bytes)?;
+        Ok(seq)
     }
 
     pub fn into_transport(self) -> T {

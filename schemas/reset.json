@@ -71,7 +71,7 @@
           "type": "boolean"
         },
         "via": {
-          "description": "`dtr-rts` (the probe is not supported yet).",
+          "description": "`dtr-rts` or `probe`.",
           "type": "string"
         }
       },

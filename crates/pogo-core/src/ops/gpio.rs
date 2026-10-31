@@ -44,9 +44,9 @@ impl PinState {
 
 /// A `[pins]` entry the host is allowed to touch.
 #[derive(Debug, Clone, Copy)]
-struct Pin {
-    probe_pin: u8,
-    mode: PinMode,
+pub(crate) struct Pin {
+    pub probe_pin: u8,
+    pub mode: PinMode,
 }
 
 fn refused(reason: impl Into<String>) -> ErrorBody {
@@ -58,7 +58,7 @@ fn refused(reason: impl Into<String>) -> ErrorBody {
 
 /// Only pins declared in config, and only those on the firmware's allow-list
 /// (docs/guardrails.md §11). An undeclared mode is open-drain, which can never drive high.
-fn declared(config: &Config, name: &str) -> Result<Pin, ErrorBody> {
+pub(crate) fn declared(config: &Config, name: &str) -> Result<Pin, ErrorBody> {
     let Some(pin) = config.pins.get(name) else {
         let known: Vec<&str> = config.pins.keys().map(String::as_str).collect();
         let known = if known.is_empty() {
@@ -88,7 +88,7 @@ fn declared(config: &Config, name: &str) -> Result<Pin, ErrorBody> {
 }
 
 /// Refuse states the pin's wiring does not allow.
-fn check_drive(name: &str, pin: Pin, level: Level) -> Result<(), ErrorBody> {
+pub(crate) fn check_drive(name: &str, pin: Pin, level: Level) -> Result<(), ErrorBody> {
     match (pin.mode, level) {
         (PinMode::Input, _) => Err(refused(format!(
             "pin '{name}' is declared as an input; it cannot be driven"
@@ -184,7 +184,12 @@ pub fn set(sel: &Selection, name: &str, state: PinState, dry_run: bool) -> OpRes
 
 /// Configure the pin's mode, then send `req`. The firmware keeps a pin's level when it
 /// is reconfigured to the mode it already has, so this never glitches a held line.
-fn drive(probe: &mut Probe, pin: Pin, req: Request, timeout: Duration) -> Result<(), ErrorBody> {
+pub(crate) fn drive(
+    probe: &mut Probe,
+    pin: Pin,
+    req: Request,
+    timeout: Duration,
+) -> Result<(), ErrorBody> {
     let configure = Request::GpioConfigure {
         pin: pin.probe_pin,
         mode: pin.mode,

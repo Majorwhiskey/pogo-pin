@@ -1,4 +1,4 @@
-//! Tools that go through the pogo probe (docs/mcp.md §9): I2C and GPIO.
+//! Tools that go through the pogo probe (docs/mcp.md §9): I2C, GPIO, and power.
 
 use std::time::Duration;
 
@@ -8,11 +8,12 @@ use rmcp::{tool, tool_router};
 
 use crate::PogoServer;
 use crate::convert::{self, blocking, parse_duration, probe_selection};
-use crate::params::{
+use crate::probe_params::{
     GpioParams, GpioPulseParams, GpioSetParams, I2cReadParams, I2cScanParams, I2cWriteParams,
-    PinStateParam,
+    PinStateParam, PowerAction, PowerMeasureParams, PowerSwitchParams,
 };
-use pogo_core::ops::{gpio, i2c};
+use pogo_core::ops::power_measure::MeasureRequest;
+use pogo_core::ops::{gpio, i2c, power, power_measure};
 use pogo_core::{ErrorBody, ErrorCode};
 
 macro_rules! sel {
@@ -110,5 +111,52 @@ impl PogoServer {
             Err(e) => return convert::fail(e),
         };
         blocking(move || gpio::pulse(&sel, &p.pin, high, duration, p.dry_run)).await
+    }
+
+    #[tool(
+        description = "Measure the target's current and bus voltage with the probe's INA226 \
+            for `duration` (default 5s) every `interval` (default 1ms). Returns current_ma \
+            {avg,min,max,p50,p95}, bus_voltage_v {avg,min,max}, energy_mj, samples, and \
+            dropped. The target must be powered through the shunt, not USB. Read-only.",
+        annotations(read_only_hint = true, destructive_hint = false)
+    )]
+    async fn power_measure(&self, Parameters(p): Parameters<PowerMeasureParams>) -> CallToolResult {
+        let sel = sel!(p.target);
+        let durations = parse_duration(p.duration.as_deref())
+            .and_then(|d| Ok((d, parse_duration(p.interval.as_deref())?)));
+        let (duration, interval) = match durations {
+            Ok(d) => d,
+            Err(e) => return convert::fail(e),
+        };
+        let req = MeasureRequest {
+            duration: duration.unwrap_or(Duration::from_secs(5)),
+            interval: interval.unwrap_or(Duration::from_millis(1)),
+            out: p.out.map(std::path::PathBuf::from),
+        };
+        blocking(move || power_measure::measure(&sel, &req)).await
+    }
+
+    #[tool(
+        description = "Switch the target's supply through the probe's load switch: \
+            \"on\", \"off\", or \"cycle\" (off for `off_time`, default 500ms, then on). \
+            RESTARTS or STOPS the target. Refused with GUARDRAIL_REFUSED if power would be \
+            off for less than min_power_off_time (default 200ms) or more than \
+            max_power_cycles_per_minute (default 10) cycles happen.",
+        annotations(read_only_hint = false, destructive_hint = true)
+    )]
+    async fn power_switch(&self, Parameters(p): Parameters<PowerSwitchParams>) -> CallToolResult {
+        let sel = sel!(p.target);
+        let dry_run = p.dry_run;
+        match p.action {
+            PowerAction::On => blocking(move || power::set(&sel, true, dry_run)).await,
+            PowerAction::Off => blocking(move || power::set(&sel, false, dry_run)).await,
+            PowerAction::Cycle => {
+                let off = match parse_duration(p.off_time.as_deref()) {
+                    Ok(d) => d.unwrap_or(Duration::from_millis(500)),
+                    Err(e) => return convert::fail(e),
+                };
+                blocking(move || power::cycle(&sel, off, dry_run)).await
+            }
+        }
     }
 }

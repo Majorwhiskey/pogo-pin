@@ -25,11 +25,11 @@ fn json(stdout: &[u8]) -> Value {
 }
 
 #[test]
-fn not_implemented_json_envelope_exits_1() {
+fn error_json_envelope_carries_code_and_hint() {
     let out = pogo()
-        .args(["power", "on", "-f", "json"])
+        .args(["i2c", "write", "0x50", "0x00", "-f", "json"])
         .assert()
-        .code(1)
+        .code(8)
         .get_output()
         .clone();
     assert!(
@@ -39,10 +39,10 @@ fn not_implemented_json_envelope_exits_1() {
     );
     let v = json(&out.stdout);
     assert_eq!(v["schema_version"], 1);
-    assert_eq!(v["command"], "power.on");
+    assert_eq!(v["command"], "i2c.write");
     assert_eq!(v["ok"], false);
     assert_eq!(v["data"], Value::Null);
-    assert_eq!(v["error"]["code"], "NOT_IMPLEMENTED");
+    assert_eq!(v["error"]["code"], "GUARDRAIL_REFUSED");
     assert!(v["error"]["hint"].is_string());
     assert_eq!(v["warnings"], serde_json::json!([]));
 }
@@ -50,40 +50,42 @@ fn not_implemented_json_envelope_exits_1() {
 #[test]
 fn dotted_command_names() {
     let out = pogo()
-        .args(["power", "measure", "--format=json"])
+        .args(["config", "path", "--format=json"])
         .assert()
-        .code(1)
+        .code(0)
         .get_output()
         .clone();
-    assert_eq!(json(&out.stdout)["command"], "power.measure");
+    assert_eq!(json(&out.stdout)["command"], "config.path");
 }
 
 #[test]
 fn format_from_env() {
     let out = pogo()
         .env("POGO_FORMAT", "jsonl")
-        .args(["power", "off"])
+        .args(["i2c", "write", "0x50", "0x00"])
         .assert()
-        .code(1)
+        .code(8)
         .get_output()
         .clone();
     let v = json(&out.stdout);
     assert_eq!(v["type"], "result");
-    assert_eq!(v["command"], "power.off");
+    assert_eq!(v["command"], "i2c.write");
 }
 
 #[test]
 fn human_error_goes_to_stderr_only() {
     let out = pogo()
-        .args(["power", "cycle"])
+        .args(["i2c", "write", "0x50", "0x00"])
         .assert()
-        .code(1)
+        .code(8)
         .get_output()
         .clone();
     assert!(out.stdout.is_empty());
     let stderr = String::from_utf8(out.stderr).unwrap();
     assert!(
-        stderr.starts_with("error[NOT_IMPLEMENTED]: not implemented yet: power.cycle"),
+        stderr.starts_with(
+            "error[GUARDRAIL_REFUSED]: refused by guardrail: 0x50 is in the protected range"
+        ),
         "{stderr}"
     );
     assert!(stderr.contains("hint:"));

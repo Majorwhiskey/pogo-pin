@@ -140,7 +140,11 @@ fn acquire_kind(
             alias: selector
                 .map(str::to_string)
                 .filter(|d| config.devices.contains_key(d)),
-            port: format!("replay:{}", path.display()),
+            // Distinct from the target's, so a replayed target and probe lock separately.
+            port: match kind {
+                DeviceKind::PogoProbe => format!("replay-probe:{}", path.display()),
+                _ => format!("replay:{}", path.display()),
+            },
             usb_serial: None,
             kind,
             usb_ids: None,

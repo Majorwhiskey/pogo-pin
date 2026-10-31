@@ -127,7 +127,7 @@ fn busy(holder_path: &Path) -> PogoError {
 }
 
 /// A file name for any key: `/dev/cu.usbmodem1` → `_dev_cu.usbmodem1`.
-fn sanitize(key: &str) -> String {
+pub fn sanitize(key: &str) -> String {
     key.chars()
         .map(|c| {
             if c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_') {

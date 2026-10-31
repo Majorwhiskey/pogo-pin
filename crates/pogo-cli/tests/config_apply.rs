@@ -124,7 +124,7 @@ fn device_parser_applies_unless_the_flag_is_given() {
 }
 
 #[test]
-fn probe_reset_in_config_is_not_implemented_yet() {
+fn probe_reset_in_config_applies_to_reset_but_not_yet_to_capture() {
     let cfg = config("reset", &format!("{TARGET}reset = \"probe\"\n"));
     let args = [
         "--device", "target", "serial", "capture", "--reset", "-f", "json",
@@ -138,5 +138,9 @@ fn probe_reset_in_config_is_not_implemented_yet() {
         "clean_boot",
         &["--device", "target", "reset", "-f", "json"],
     );
-    assert_eq!(code, Some(1));
+    assert_eq!(
+        code,
+        Some(10),
+        "auto follows reset = \"probe\", which needs the pins"
+    );
 }

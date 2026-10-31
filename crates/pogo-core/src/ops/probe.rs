@@ -32,7 +32,11 @@ impl Probe {
     /// Resolve, lock, open, and say hello. A replay (`POGO_REPLAY`) stands in for the
     /// probe's side of the conversation.
     pub fn open(sel: &Selection, config: Config, command: &str) -> Result<Probe, ErrorBody> {
-        let target = acquire_probe(sel, config, command)?;
+        Probe::connect(acquire_probe(sel, config, command)?)
+    }
+
+    /// Open and say hello to an already resolved and locked probe.
+    pub fn connect(target: Target) -> Result<Probe, ErrorBody> {
         #[cfg(test)]
         if let Some(t) = tests::MOCK.with(|m| m.borrow_mut().take()) {
             let client = ProbeClient::connect(t)?;
@@ -59,6 +63,31 @@ impl Probe {
     /// One request; `Response::Err` becomes the matching error.
     pub fn call(&mut self, req: Request) -> Result<Response, ErrorBody> {
         self.call_with(req, REQUEST_TIMEOUT)
+    }
+
+    /// A request answered by several responses; `on` returns `true` at the last one.
+    /// `Response::Err` ends the stream as an error.
+    pub fn stream(
+        &mut self,
+        req: Request,
+        timeout: Duration,
+        mut on: impl FnMut(Response) -> bool,
+    ) -> Result<(), ErrorBody> {
+        let mut failed = None;
+        self.client.request_stream(req, timeout, |r| match r {
+            Response::Err(e) => {
+                failed = Some(probe_error(e));
+                Ok(true)
+            }
+            r => Ok(on(r)),
+        })?;
+        failed.map_or(Ok(()), Err)
+    }
+
+    /// Send without waiting for an answer, e.g. `PowerStop` while giving up.
+    pub fn send(&mut self, req: Request) -> Result<(), ErrorBody> {
+        self.client.send(req)?;
+        Ok(())
     }
 
     /// Append a mutating action to the audit log (not for replays); a failure to log
@@ -271,4 +300,4 @@ fn bus0_check(r: Result<Response, ErrorBody>) -> Check {
 
 #[cfg(test)]
 #[path = "probe_tests.rs"]
-mod tests;
+pub(crate) mod tests;

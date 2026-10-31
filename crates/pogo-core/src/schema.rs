@@ -10,6 +10,8 @@ use crate::envelope::Envelope;
 use crate::flash::{FlashData, InfoData};
 use crate::ops::gpio::{GpioGetData, GpioPulseData, GpioSetData};
 use crate::ops::i2c::{I2cReadData, I2cScanData, I2cWriteData};
+use crate::ops::power::{PowerCycleData, PowerSwitchData};
+use crate::ops::power_measure::PowerMeasureData;
 use crate::ops::probe::{ProbeInfoData, SelftestData};
 use crate::reset::ResetData;
 use crate::run::RunData;
@@ -32,6 +34,10 @@ pub const COMMANDS_WITH_SCHEMA: &[&str] = &[
     "gpio.get",
     "gpio.set",
     "gpio.pulse",
+    "power.measure",
+    "power.on",
+    "power.off",
+    "power.cycle",
     "probe.info",
     "probe.selftest",
     "config.show",
@@ -56,6 +62,9 @@ pub fn envelope_schema(command: &str) -> Option<Value> {
         "gpio.get" => schema_for!(Envelope<GpioGetData>),
         "gpio.set" => schema_for!(Envelope<GpioSetData>),
         "gpio.pulse" => schema_for!(Envelope<GpioPulseData>),
+        "power.measure" => schema_for!(Envelope<PowerMeasureData>),
+        "power.on" | "power.off" => schema_for!(Envelope<PowerSwitchData>),
+        "power.cycle" => schema_for!(Envelope<PowerCycleData>),
         "probe.info" => schema_for!(Envelope<ProbeInfoData>),
         "probe.selftest" => schema_for!(Envelope<SelftestData>),
         "config.show" => schema_for!(Envelope<ConfigShowResult>),
@@ -81,7 +90,7 @@ mod tests {
             assert_eq!(s["title"], format!("pogo {cmd} envelope"));
             assert!(s["properties"]["data"].is_object(), "{cmd}");
         }
-        assert!(envelope_schema("power.measure").is_none());
+        assert!(envelope_schema("nope").is_none());
     }
 
     #[test]

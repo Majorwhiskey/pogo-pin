@@ -199,3 +199,23 @@ fn no_probe_connected_is_device_not_found() {
     assert_eq!(v["error"]["code"], "DEVICE_NOT_FOUND");
     assert!(v["error"]["hint"].as_str().unwrap().contains("--probe"));
 }
+
+#[test]
+fn reset_via_probe_pulses_en() {
+    let v = json("probe_ok", &["reset", "--via", "probe"], 0);
+    assert_eq!(
+        (v["data"]["via"].as_str(), v["data"]["mode"].as_str()),
+        (Some("probe"), Some("run"))
+    );
+    let v = json(
+        "probe_silent",
+        &["reset", "--via", "probe", "--mode", "bootloader"],
+        10,
+    );
+    assert!(
+        v["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("[pins.target_boot]")
+    );
+}

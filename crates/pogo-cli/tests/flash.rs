@@ -148,9 +148,15 @@ fn replay_cannot_flash_or_read_info() {
 }
 
 #[test]
-fn reset_via_probe_is_not_implemented_and_dry_run_works() {
-    let v = pogo(&["reset", "--via", "probe"], 1, None);
-    assert_eq!(v["error"]["code"], "NOT_IMPLEMENTED");
+fn reset_via_probe_needs_pins_and_dry_run_works() {
+    let v = pogo(&["reset", "--via", "probe"], 10, None);
+    assert_eq!(v["error"]["code"], "CONFIG_INVALID");
+    assert!(
+        v["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("[pins.target_en]")
+    );
     let v = pogo(
         &["reset", "--mode", "bootloader", "--dry-run"],
         0,

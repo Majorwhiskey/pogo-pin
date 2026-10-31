@@ -14,9 +14,9 @@ use rmcp::model::CallToolResult;
 use serde::Serialize;
 
 use crate::params::{
-    CaptureParams, FlashParams, LineEndingParam, ParserParam, ProbeTarget, SerialSendParams,
-    TargetParams,
+    CaptureParams, FlashParams, LineEndingParam, ParserParam, SerialSendParams, TargetParams,
 };
+use crate::probe_params::ProbeTarget;
 
 /// MCP has no flags, so the config comes from `POGO_CONFIG` or the usual search.
 pub fn selection(t: &TargetParams) -> Result<Selection, ErrorBody> {

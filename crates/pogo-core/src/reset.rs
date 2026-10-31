@@ -20,7 +20,7 @@ pub struct ResetData {
     pub device: ResolvedDevice,
     /// `run` or `bootloader`.
     pub mode: String,
-    /// `dtr-rts` (the probe is not supported yet).
+    /// `dtr-rts` or `probe`.
     pub via: String,
     /// The device dropped off USB and came back (native USB boards).
     pub reconnected: bool,

@@ -198,8 +198,8 @@ Examples:
 
 Exit codes: 0 ok, 3 probe not found, 6 probe I/O or protocol
 
-JSON data: { duration_ms, samples, dropped, current_ma: { avg, min, max, p50, p95 },
-bus_voltage_v: { avg, min, max }, energy_mj, csv_path }";
+JSON data: { duration_ms, interval_us, samples, dropped,
+current_ma: { avg, min, max, p50, p95 }, bus_voltage_v: { avg, min, max }, energy_mj, csv_path }";
 
 pub const POWER_SWITCH: &str = "\
 Requires the probe and a load switch on the configured switch pin.
@@ -210,7 +210,7 @@ Examples:
 
 Exit codes: 0 ok, 3 probe not found, 6 probe I/O, 8 guardrail refused
 
-JSON data: { on }";
+JSON data: { on, dry_run }";
 
 pub const POWER_CYCLE: &str = "\
 Requires the probe and a load switch. Limited by min_power_off_time and
@@ -222,7 +222,7 @@ Examples:
 
 Exit codes: 0 ok, 3 probe not found, 6 probe I/O, 8 guardrail refused
 
-JSON data: { off_time_ms }";
+JSON data: { off_time_ms, dry_run }";
 
 pub const PROBE_INFO: &str = "\
 Examples:

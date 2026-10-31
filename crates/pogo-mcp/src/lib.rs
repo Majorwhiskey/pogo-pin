@@ -3,6 +3,7 @@
 
 mod convert;
 mod params;
+mod probe_params;
 mod probe_tools;
 
 use rmcp::handler::server::router::tool::ToolRouter;

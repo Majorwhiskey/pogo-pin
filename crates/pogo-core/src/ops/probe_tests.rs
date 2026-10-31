@@ -31,7 +31,7 @@ fn hello(major: u8) -> Response {
 }
 
 /// The probe's side of a session: `Hello`, then `responses` with seq 2, 3, ...
-fn wire(major: u8, responses: &[Response]) -> Vec<Vec<u8>> {
+pub(crate) fn wire(major: u8, responses: &[Response]) -> Vec<Vec<u8>> {
     std::iter::once(hello(major))
         .chain(responses.iter().cloned())
         .enumerate()
@@ -98,7 +98,7 @@ fn fixtures() -> Vec<(&'static str, Vec<Vec<u8>>)> {
     ]
 }
 
-fn as_jsonl(frames: &[Vec<u8>]) -> String {
+pub(crate) fn as_jsonl(frames: &[Vec<u8>]) -> String {
     let mut out = String::from(
         "{\"type\":\"header\",\"format\":1,\"pogo_version\":\"0.1.0\",\"port\":\"/dev/cu.usbmodem2101\",\"baud\":115200}\n",
     );
@@ -131,7 +131,7 @@ fn probe_fixtures_are_current() {
 }
 
 /// A config with the docs' example pins, and a selection that skips discovery.
-fn setup(extra: &str) -> Selection {
+pub(crate) fn setup(extra: &str) -> Selection {
     use std::sync::atomic::{AtomicU32, Ordering};
     static N: AtomicU32 = AtomicU32::new(0);
     let dir = std::env::temp_dir().join(format!("pogo-probe-ops-{}", std::process::id()));
@@ -153,7 +153,7 @@ fn setup(extra: &str) -> Selection {
 }
 
 /// Script the probe for the next op and return the requests it was sent.
-fn script(responses: &[Response]) -> std::sync::Arc<std::sync::Mutex<Vec<MockCall>>> {
+pub(crate) fn script(responses: &[Response]) -> std::sync::Arc<std::sync::Mutex<Vec<MockCall>>> {
     let steps: Vec<Step> = wire(PROTOCOL_MAJOR, responses)
         .into_iter()
         .map(Step::Rx)
