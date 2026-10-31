@@ -5,6 +5,10 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
+description = "Agent-friendly hardware workbench for ESP32 boards: flash, reset, capture serial, and drive a probe, with JSON output and an MCP server"
+readme = "../../README.md"
+keywords = ["esp32", "embedded", "hardware", "mcp", "cli"]
+categories = ["command-line-utilities", "embedded", "development-tools"]
 
 [dependencies]
 clap = { version = "4.6.7", features = ["derive", "env", "wrap_help"] }

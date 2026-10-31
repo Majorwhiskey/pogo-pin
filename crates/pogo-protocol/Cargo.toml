@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 description = "Wire protocol between pogo and its probe firmware (no_std)"
+readme = "../../README.md"
+keywords = ["embedded", "no-std", "protocol", "postcard"]
+categories = ["embedded", "no-std", "encoding"]
 
 [dependencies]
 heapless = { version = "0.9.3", features = ["serde"] }

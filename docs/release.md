@@ -10,7 +10,8 @@
 **Release:**
 
 - Use cargo-dist (`dist`) to build binaries for Linux x86_64 and aarch64, macOS arm64 and x86_64, and Windows x86_64, plus shell and PowerShell installers and a Homebrew formula in a tap repository.
-- Publish crates to crates.io (`pogo-protocol`, `pogo-core`, `pogo-cli`, `pogo-mcp`).
+- Publish crates to crates.io (`pogo-protocol`, `pogo-core`, `pogo-mcp`, `pogo-cli`, in that order). As of 2026-10-31 all four names are free; `pogo` itself is taken by an unrelated 2020 crate, so the install command is `cargo install pogo-cli` (it installs the `pogo` binary). No Homebrew core formula is named `pogo` or `pogo-pin`.
+- Each crate ships `LICENSE-MIT` and `LICENSE-APACHE` (symlinks to the workspace root) and the workspace README. `cargo package --workspace --offline` checks that all four package and build before publishing.
 - Attach probe `.uf2` files to each GitHub release.
 - Semantic versioning for the tool; `schema_version` versions the JSON contract independently.
 - Generate `CHANGELOG.md` from Conventional Commits with `git-cliff`.

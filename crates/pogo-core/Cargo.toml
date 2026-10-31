@@ -5,6 +5,10 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
+description = "Core library for pogo: ESP32 flashing, serial capture with panic detection, and the pogo probe"
+readme = "../../README.md"
+keywords = ["esp32", "embedded", "serial", "hardware"]
+categories = ["embedded", "development-tools", "hardware-support"]
 
 [dependencies]
 addr2line = "0.27.1"

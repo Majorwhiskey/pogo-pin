@@ -4,7 +4,7 @@ Give AI coding agents eyes and hands on real hardware. Flash, monitor, and probe
 
 **An agent-friendly hardware workbench CLI (`pogo`).** Flash, reset, monitor, probe, and measure ESP32 boards from the terminal, with deterministic, machine-readable output built for AI coding agents (like Claude Code) and humans alike.
 
-> **Status:** pre-alpha. This README and the files in [`docs/`](docs/) are the project specification. The project is `pogo-pin`; the binary is `pogo` and crates are `pogo-*`. Check crates.io and Homebrew for availability before the first public release.
+> **Status:** pre-alpha. This README and the files in [`docs/`](docs/) are the project specification. The project is `pogo-pin`; the binary is `pogo` and crates are `pogo-*`. The crate names are free on crates.io (checked 2026-10-31; see [docs/release.md](docs/release.md)).
 >
 > **Last updated:** 2026-10-26
 
