@@ -5,7 +5,7 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 ## Phase 0: Skeleton and contract
 
 - [x] Workspace with the four crates; root `exclude = ["firmware/*"]`; `[workspace.lints]` denying `clippy::unwrap_used` and `clippy::expect_used` in non-test code
-- [x] `BenchError`, `ErrorCode`, exit code mapping, hints
+- [x] `PogoError`, `ErrorCode`, exit code mapping, hints
 - [x] Output module: envelope, `human`/`json`/`jsonl`, stream discipline, colors
 - [x] Config loading and merge; `config show|path|validate`
 - [x] clap definitions for **all** commands; unimplemented ones return `NOT_IMPLEMENTED`

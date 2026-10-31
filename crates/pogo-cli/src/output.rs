@@ -27,11 +27,15 @@ impl Reply {
     pub fn ok<T: Serialize + Render>(data: &T, style: &Style) -> Self {
         let mut human = String::new();
         data.render_human(&mut human, style);
+        let mut value = to_value(data);
+        let warnings = pogo_core::cap::apply(&mut value, pogo_core::cap::SOFT_CAP_BYTES)
+            .into_iter()
+            .collect();
         Reply {
-            data: Some(to_value(data)),
+            data: Some(value),
             human,
             error: None,
-            warnings: Vec::new(),
+            warnings,
         }
     }
 

@@ -229,3 +229,47 @@ fn record_writes_a_replayable_session() {
     let second: Value = serde_json::from_slice(&out.stdout).unwrap();
     assert_eq!(first["data"]["lines"], second["data"]["lines"]);
 }
+
+/// A capture bigger than the ~200 KB soft cap loses middle lines with a warning.
+#[test]
+fn oversized_output_is_capped_with_a_warning() {
+    let dir = std::env::temp_dir().join(format!("pogo-cap-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("flood.jsonl");
+    let mut text = String::from(r#"{"type":"header","format":1,"pogo_version":"0.1.0"}"#);
+    text.push('\n');
+    let body: String = (0..4000)
+        .map(|i| format!("{i:05} {}\\n", "x".repeat(140)))
+        .collect();
+    text.push_str(&format!(r#"{{"type":"rx","t_ms":0,"text":"{body}"}}"#));
+    text.push('\n');
+    std::fs::write(&path, text).unwrap();
+
+    let out = Command::cargo_bin("pogo")
+        .unwrap()
+        .env("POGO_REPLAY", &path)
+        .args([
+            "serial",
+            "capture",
+            "--timeout",
+            "300ms",
+            "--max-lines",
+            "100000",
+        ])
+        .args(["-f", "json"])
+        .assert()
+        .code(0)
+        .get_output()
+        .clone();
+    assert!(out.stdout.len() < 210 * 1024, "{} bytes", out.stdout.len());
+    let v: Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(v["warnings"][0]["code"], "OUTPUT_TRUNCATED");
+    let d = &v["data"];
+    assert_eq!(d["line_count"], 4000);
+    let kept = d["lines"].as_array().unwrap().len() as u64;
+    assert_eq!(kept + d["omitted_lines"].as_u64().unwrap(), 4000);
+    assert_eq!(
+        d["lines"][0]["text"].as_str().unwrap().get(..5),
+        Some("00000")
+    );
+}

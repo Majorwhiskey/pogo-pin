@@ -38,20 +38,22 @@ pogo-pin/
 │   ├── pogo-core/            # library: all logic, no printing, no process::exit
 │   │   └── src/
 │   │       ├── lib.rs
-│   │       ├── error.rs          # BenchError, ErrorCode, exit codes, hints
+│   │       ├── error.rs          # PogoError and hints; error/code.rs: ErrorCode, exit codes
 │   │       ├── deadline.rs
-│   │       ├── config.rs
-│   │       ├── discovery.rs      # USB enumeration and device classification
+│   │       ├── config/           # discovery, merge with per-key sources, validation
+│   │       ├── discovery.rs      # USB enumeration, classification; discovery/resolve.rs: --device
 │   │       ├── lock.rs           # per-device lock files
-│   │       ├── transport/        # Transport trait; serial, mock, replay impls
+│   │       ├── transport/        # Transport trait; serial, mock, replay, recording, reconnecting
 │   │       ├── serial/           # line splitter, ANSI strip, parsers, capture engine, panic detection
-│   │       ├── flash.rs          # Flasher trait + espflash implementation
-│   │       ├── reset.rs
+│   │       ├── flash/            # Flasher trait, guardrail checks; esp.rs: espflash implementation
+│   │       ├── reset.rs          # DTR/RTS sequences, re-enumeration wait
 │   │       ├── symbolize.rs      # ELF + addr2line
-│   │       ├── probe/            # probe client over pogo-protocol
-│   │       ├── power.rs          # INA226 conversion, stats
-│   │       ├── guardrails.rs
-│   │       └── audit.rs
+│   │       ├── ops/              # whole commands (select, lock, act, map outcomes) for CLI and MCP
+│   │       ├── doctor.rs         # environment checks
+│   │       ├── cap.rs            # ~200 KB soft cap on output
+│   │       ├── audit.rs
+│   │       ├── probe/            # probe client over pogo-protocol (Phase 4)
+│   │       └── power.rs          # INA226 conversion, stats (Phase 5)
 │   ├── pogo-protocol/        # no_std shared host↔probe types (serde + postcard)
 │   ├── pogo-cli/             # binary `pogo`: clap, output formatting, exit mapping
 │   └── pogo-mcp/             # MCP server built on core; launched via `pogo mcp`
@@ -87,11 +89,11 @@ The firmware projects must be excluded from the root workspace (`exclude = ["fir
 // transport/mod.rs
 pub trait Transport: Send {
     /// Read available bytes, waiting at most `timeout`. Ok(0) means no data yet.
-    fn read(&mut self, buf: &mut [u8], timeout: Duration) -> Result<usize, BenchError>;
-    fn write_all(&mut self, data: &[u8]) -> Result<(), BenchError>;
-    fn set_dtr(&mut self, asserted: bool) -> Result<(), BenchError>;
-    fn set_rts(&mut self, asserted: bool) -> Result<(), BenchError>;
-    fn set_baud(&mut self, baud: u32) -> Result<(), BenchError>;
+    fn read(&mut self, buf: &mut [u8], timeout: Duration) -> Result<usize, PogoError>;
+    fn write_all(&mut self, data: &[u8]) -> Result<(), PogoError>;
+    fn set_dtr(&mut self, asserted: bool) -> Result<(), PogoError>;
+    fn set_rts(&mut self, asserted: bool) -> Result<(), PogoError>;
+    fn set_baud(&mut self, baud: u32) -> Result<(), PogoError>;
 }
 // Implementations: SerialTransport (serialport crate), MockTransport (scripted, timed
 // chunks), ReplayTransport (reads a recorded .jsonl session).
@@ -105,7 +107,7 @@ impl Deadline {
 
 // error.rs
 #[derive(Debug, thiserror::Error)]
-pub enum BenchError {
+pub enum PogoError {
     #[error("no device matched '{selector}'")]
     DeviceNotFound { selector: String },
     #[error("{} devices matched; pass --device to choose one", candidates.len())]
@@ -125,7 +127,7 @@ pub enum BenchError {
     #[error("not implemented yet: {0}")]
     NotImplemented(&'static str),
 }
-impl BenchError {
+impl PogoError {
     pub fn code(&self) -> ErrorCode;       // stable SCREAMING_SNAKE_CASE string
     pub fn exit_code(&self) -> u8;         // see §6.4
     pub fn hint(&self) -> Option<String>;  // actionable next step
@@ -136,7 +138,7 @@ pub fn capture(
     t: &mut dyn Transport,
     opts: &CaptureOptions,
     deadline: Deadline,
-) -> Result<CaptureResult, BenchError>;
+) -> Result<CaptureResult, PogoError>;
 
 #[derive(Serialize, JsonSchema)]
 pub struct CaptureResult {

@@ -106,11 +106,16 @@ pub fn send_request(p: &SerialSendParams) -> Result<SendRequest, ErrorBody> {
 /// `{ ok, data, error, warnings }`: the CLI envelope's payload, marked as a tool error
 /// when `error` is set.
 pub fn to_result<T: Serialize>(r: OpResult<T>) -> CallToolResult {
+    let mut data = r.data_json();
+    let mut warnings = r.warnings;
+    if let Some(d) = data.as_mut() {
+        warnings.extend(pogo_core::cap::apply(d, pogo_core::cap::SOFT_CAP_BYTES));
+    }
     let body = serde_json::json!({
         "ok": r.error.is_none(),
-        "data": r.data_json(),
+        "data": data,
         "error": r.error,
-        "warnings": r.warnings,
+        "warnings": warnings,
     });
     if r.error.is_some() {
         CallToolResult::structured_error(body)

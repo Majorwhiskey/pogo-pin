@@ -94,7 +94,7 @@ Output is bounded so agents don't flood their context:
 
 - `--max-lines` (default 500). When exceeded, keep the first 20% and last 80% of lines and report `omitted_lines`. Boot output and the end of a crash are both preserved.
 - `--max-line-len` (default 1000 characters); longer lines are cut and marked `"truncated": true`.
-- A soft cap of about 200 KB per envelope, with a `OUTPUT_TRUNCATED` warning when hit.
+- A soft cap of about 200 KB per envelope, with a `OUTPUT_TRUNCATED` warning when hit. Capture lines are dropped from the middle (after the first 20%) until `data` fits, and counted in that capture's `omitted_lines`; `line_count` still counts every line seen. The same cap applies to MCP results.
 
 On Ctrl-C or SIGTERM, `pogo` stops cleanly, releases locks and probe pins it was pulsing, prints the partial envelope, and exits with 130.
 

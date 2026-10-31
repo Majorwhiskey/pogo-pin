@@ -1,6 +1,7 @@
 //! Core library for pogo: all hardware logic, no printing, no process exit.
 
 pub mod audit;
+pub mod cap;
 pub mod config;
 pub mod deadline;
 pub mod discovery;
