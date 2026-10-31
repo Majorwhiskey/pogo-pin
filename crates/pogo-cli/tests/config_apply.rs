@@ -124,15 +124,21 @@ fn device_parser_applies_unless_the_flag_is_given() {
 }
 
 #[test]
-fn probe_reset_in_config_applies_to_reset_but_not_yet_to_capture() {
+fn probe_reset_in_config_needs_the_reset_pins() {
     let cfg = config("reset", &format!("{TARGET}reset = \"probe\"\n"));
     let args = [
         "--device", "target", "serial", "capture", "--reset", "-f", "json",
     ];
     let (code, out) = pogo(&cfg, "clean_boot", &args);
-    assert_eq!(code, Some(1));
+    assert_eq!(code, Some(10));
     let v: Value = serde_json::from_slice(&out).unwrap();
-    assert_eq!(v["error"]["code"], "NOT_IMPLEMENTED");
+    assert_eq!(v["error"]["code"], "CONFIG_INVALID");
+    assert!(
+        v["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("[pins.target_en]")
+    );
     let (code, _) = pogo(
         &cfg,
         "clean_boot",

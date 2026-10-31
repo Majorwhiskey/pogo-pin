@@ -55,7 +55,7 @@ pub fn run(
     }
 
     let timeout = target.timeout(timeout, DEFAULT_CAPTURE_TIMEOUT);
-    let done = match capture_locked(&target, capture, true, timeout, live) {
+    let done = match capture_locked(sel, &target, capture, true, timeout, live) {
         Ok(d) => d,
         Err(e) => return OpResult::fail(e).with_warnings(warnings),
     };

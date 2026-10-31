@@ -7,15 +7,16 @@ use std::sync::atomic::AtomicBool;
 use std::time::Duration;
 
 use super::outcome::{outcome_error, symbolize_panic};
+use super::probe_reset;
 use super::target::{Selection, Target, acquire};
 use super::{DEFAULT_CAPTURE_TIMEOUT, OpResult, usage};
 use crate::config::{ParserName, ResetMode as ConfigResetMode};
 use crate::deadline::Deadline;
 use crate::envelope::ErrorBody;
-use crate::error::PogoError;
 use crate::serial::capture::CaptureOptions;
 use crate::serial::session::{
-    SerialCaptureData, SessionOptions, SessionOutput, capture_device, capture_on, compile_patterns,
+    Reset, SerialCaptureData, SessionOptions, SessionOutput, capture_device, capture_on,
+    compile_patterns,
 };
 use crate::serial::{DecodeOptions, LogLine};
 use crate::transport::ReplayTransport;
@@ -79,7 +80,7 @@ pub fn serial_capture(
         Err(e) => return OpResult::fail(e),
     };
     let timeout = target.timeout(timeout, DEFAULT_CAPTURE_TIMEOUT);
-    match capture_locked(&target, req, reset, timeout, live) {
+    match capture_locked(sel, &target, req, reset, timeout, live) {
         Ok(done) => {
             let error = outcome_error(&done.out.data.capture, &req.until, timeout, done.reconnect);
             OpResult::ok(done.out.data)
@@ -107,15 +108,20 @@ pub struct CaptureDone {
 /// Capture from a locked target. The timeout starts here, so time spent waiting for the
 /// lock is not charged to it.
 pub fn capture_locked(
+    sel: &Selection,
     target: &Target,
     req: &CaptureRequest,
     reset: bool,
     timeout: Duration,
     live: Live,
 ) -> Result<CaptureDone, ErrorBody> {
-    if reset && target.device_config().and_then(|d| d.reset) == Some(ConfigResetMode::Probe) {
-        return Err(PogoError::NotImplemented("reset via probe").into());
-    }
+    // A device configured for probe resets gets one here too; the probe is connected
+    // before the port opens so its errors come first.
+    let method = match (reset, target.device_config().and_then(|d| d.reset)) {
+        (false, _) => None,
+        (true, Some(ConfigResetMode::Probe)) => Some(probe_reset::for_capture(sel, target)?),
+        (true, _) => Some(Reset::DtrRts),
+    };
     let deadline = Deadline::after(timeout);
     let until = compile_patterns(&req.until, "until").map_err(usage)?;
     let fail_on = target.fail_on(!req.no_default_fail_patterns, &req.fail_on);
@@ -146,7 +152,7 @@ pub fn capture_locked(
     };
     let session = SessionOptions {
         baud: target.baud(req.baud),
-        reset,
+        reset: method,
         record,
         reconnect: req.reconnect_timeout,
     };

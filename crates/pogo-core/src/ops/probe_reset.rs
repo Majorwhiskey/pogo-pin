@@ -8,10 +8,12 @@ use pogo_protocol::{Level, Request};
 use super::gpio::{Pin, check_drive, declared, drive};
 use super::probe::Probe;
 use super::reset::ResetMode;
+use super::target::{Selection, Target, acquire_probe};
 use crate::config::Config;
 use crate::envelope::ErrorBody;
-use crate::error::PogoError;
+use crate::error::{ErrorCode, PogoError};
 use crate::probe::REQUEST_TIMEOUT;
+use crate::serial::session::Reset;
 
 pub const EN_PIN: &str = "target_en";
 pub const BOOT_PIN: &str = "target_boot";
@@ -59,6 +61,26 @@ fn set(probe: &mut Probe, pin: Pin, level: Level) -> Result<(), ErrorBody> {
         level,
     };
     drive(probe, pin, req, REQUEST_TIMEOUT)
+}
+
+/// A run-mode probe reset for a capture session: pins checked and the probe connected
+/// now, the pulse sent when the session calls it.
+pub fn for_capture(sel: &Selection, target: &Target) -> Result<Reset, ErrorBody> {
+    let (en, boot) = pins(&target.config, ResetMode::Run)?;
+    let probe_target = acquire_probe(sel, target.config.clone(), "reset")?;
+    let mut probe = Probe::connect(probe_target)?;
+    Ok(Reset::Custom(Box::new(move || {
+        reset(&mut probe, en, boot, ResetMode::Run).map_err(to_pogo)
+    })))
+}
+
+/// The session speaks `PogoError`; keep the code and message of what the probe reported.
+fn to_pogo(e: ErrorBody) -> PogoError {
+    match e.code {
+        ErrorCode::DeviceIo => PogoError::DeviceIo(e.message),
+        ErrorCode::GuardrailRefused => PogoError::GuardrailRefused { reason: e.message },
+        _ => PogoError::Protocol(e.message),
+    }
 }
 
 /// Pulse EN low with BOOT released (run) or held low (bootloader). BOOT is released
@@ -145,5 +167,47 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn capture_reset_of_a_probe_reset_device_pulses_en_then_captures() {
+        let device = "[devices.target]\nkind = \"esp32\"\nmatch = { port = \"/dev/none\" }\n\
+                      reset = \"probe\"\n";
+        let mut sel = setup(&format!("{PINS}{device}"));
+        // A private copy: the replay path is the target's lock key.
+        let src = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../tests/fixtures/synthetic/clean_boot.jsonl"
+        );
+        let replay = sel.config.as_ref().unwrap().with_extension("jsonl");
+        std::fs::copy(src, &replay).unwrap();
+        sel.replay = Some(replay);
+        sel.device = Some("target".into());
+        let calls = script(&vec![Response::Ok; 4]);
+        let req = crate::ops::capture::CaptureRequest {
+            until: vec!["READY".into()],
+            ..Default::default()
+        };
+        let live = crate::ops::capture::Live {
+            on_line: &mut |_| {},
+            cancel: None,
+        };
+        let timeout = Some(std::time::Duration::from_millis(300));
+        let r = crate::ops::capture::serial_capture(&sel, &req, true, timeout, live);
+        assert!(r.error.is_none(), "{:?}", r.error);
+        assert_eq!(r.data.unwrap().capture.boot_count, 1);
+        let pulses = calls
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|c| match c {
+                MockCall::Write(b) => matches!(
+                    decode::<Request>(&mut b.clone()).unwrap().body,
+                    Request::GpioPulse { pin: 2, .. }
+                ),
+                _ => false,
+            })
+            .count();
+        assert_eq!(pulses, 1);
     }
 }

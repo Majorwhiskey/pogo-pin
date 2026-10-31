@@ -26,10 +26,18 @@ pub struct SerialCaptureData {
     pub capture: CaptureResult,
 }
 
+/// How to reset the target once its port is open.
+pub enum Reset {
+    /// Toggle the port's DTR/RTS lines.
+    DtrRts,
+    /// Something else, such as the probe's EN pin.
+    Custom(Box<dyn FnOnce() -> Result<(), PogoError>>),
+}
+
 pub struct SessionOptions {
     pub baud: u32,
     /// Reset into run mode before capturing, so capture starts at the first boot byte.
-    pub reset: bool,
+    pub reset: Option<Reset>,
     /// Where `--record` writes the session, already opened by the caller.
     pub record: Option<Box<dyn Write + Send>>,
     /// How long a vanished device may take to reappear (by USB serial) before the
@@ -131,14 +139,16 @@ pub fn compile_patterns(patterns: &[String], flag: &str) -> Result<Vec<regex::Re
 
 fn run(
     t: &mut dyn Transport,
-    reset: bool,
+    reset: Option<Reset>,
     jtag: bool,
     opts: &CaptureOptions,
     deadline: Deadline,
     on_line: &mut dyn FnMut(&LogLine),
 ) -> Result<CaptureResult, PogoError> {
-    if reset {
-        hard_reset(t, jtag)?;
+    match reset {
+        Some(Reset::DtrRts) => hard_reset(t, jtag)?,
+        Some(Reset::Custom(f)) => f()?,
+        None => {}
     }
     capture(t, opts, deadline, on_line)
 }
