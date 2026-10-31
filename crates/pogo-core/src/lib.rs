@@ -11,6 +11,7 @@ pub mod error;
 pub mod flash;
 pub mod lock;
 pub mod ops;
+pub mod probe;
 pub mod reset;
 pub mod run;
 pub mod schema;

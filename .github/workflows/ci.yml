@@ -71,3 +71,16 @@ jobs:
       - name: Build test-target firmware (ESP32)
         working-directory: firmware/test-target
         run: cargo build --release
+
+  protocol-no-std:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv6m-none-eabi,thumbv8m.main-none-eabihf
+      - uses: Swatinem/rust-cache@v2.9.3
+      - name: Build pogo-protocol for RP2040 and RP2350
+        run: |
+          cargo build -p pogo-protocol --target thumbv6m-none-eabi
+          cargo build -p pogo-protocol --target thumbv8m.main-none-eabihf

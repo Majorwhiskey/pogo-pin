@@ -17,7 +17,7 @@ The probe firmware is deliberately simple. It exposes a USB CDC-ACM serial devic
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Frame<T> { pub seq: u16, pub body: T }
 
-pub const MAGIC: u32 = 0x4245_4E43; // "BENC"
+pub const MAGIC: u32 = 0x504F_474F; // "POGO"
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Request {
@@ -54,6 +54,8 @@ pub struct PowerSample { pub shunt_raw: i16, pub bus_raw: u16 }
 ```
 
 `pogo-protocol` must build for both the host and `thumbv6m-none-eabi` / `thumbv8m.main-none-eabihf`. Enable `heapless`'s `serde` feature.
+
+The crate also defines `PinMode` (`OpenDrain | PushPull | Input`), `Level` (`Low | High | Release`), `Board` (`Rp2040 | Rp2350`), and `ProbeError` (`PinNotAllowed`, `PinNotConfigured`, `InvalidLevel`, `InvalidBus`, `I2cNack`, `I2cBus`, `PowerUnavailable`, `Busy`, `Unsupported`, `BadFrame`), plus `PROTOCOL_MAJOR`/`PROTOCOL_MINOR` (1.0), `MAX_FRAME` (512), and `ALLOWED_PINS` with `pin_allowed()`, so host and firmware share one allow-list. `codec::{encode, decode, FrameReader}` do the framing without allocation; `FrameReader` drops a frame that exceeds `MAX_FRAME` and resynchronizes at the next `0x00`. Property tests cover round-trips of every message, reassembly under arbitrary chunking, and that the largest message of each kind fits in one frame. CI builds the crate for both probe targets.
 
 ## 8.4 Handshake and versioning
 
