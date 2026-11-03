@@ -1,6 +1,6 @@
 # 16. Launch and showcase checklist
 
-- [ ] **Hero demo** at the top of README.md: a 60–90 second recording of Claude Code finding and fixing a planted firmware bug on a real board, using only `pogo`.
+- [ ] **Hero demo** at the top of README.md: a 60–90 second recording of Claude Code finding and fixing a planted firmware bug on a real board, using only `pogo`. The firmware, prompt, and steps are ready in [demo.md](demo.md); the recording itself is still to do.
 - [ ] Terminal recordings (asciinema) of `devices`, `run`, `i2c scan`, and `power measure`.
 - [ ] Architecture diagram and a photo of the wired bench in `docs/`.
 - [ ] Measured numbers: time from code edit to verified boot, capture overhead, test count and coverage. Timing and test count are in [measurements.md](measurements.md); coverage is still to do.

@@ -45,8 +45,9 @@ fn pogo(args: &[&str]) -> (i32, Value) {
 }
 
 /// Make sure the board runs the test firmware and is at READY, flashing it if needed.
+/// Other firmware may print READY too, so the test firmware's banner must be there.
 fn ready() {
-    let (code, _) = pogo(&[
+    let (code, v) = pogo(&[
         "run",
         &elf(),
         "--no-flash",
@@ -55,7 +56,16 @@ fn ready() {
         "--timeout",
         "8s",
     ]);
-    if code != 0 {
+    let ours = v["data"]["capture"]["lines"]
+        .as_array()
+        .is_some_and(|lines| {
+            lines.iter().any(|l| {
+                l["text"]
+                    .as_str()
+                    .is_some_and(|t| t.contains("test-target"))
+            })
+        });
+    if code != 0 || !ours {
         let (code, v) = pogo(&["run", &elf(), "--until", "^READY$", "--timeout", "15s"]);
         assert_eq!(code, 0, "could not flash the test firmware: {v:#}");
     }
@@ -70,6 +80,11 @@ fn run_flashes_and_reaches_ready() {
     assert_eq!(code, 0, "{v:#}");
     let d = &v["data"];
     assert!(d["flash"]["chip"].as_str().unwrap().starts_with("esp32"));
+    // Read before writing: afterwards the chip may be running the app, not the bootloader.
+    assert!(
+        d["flash"]["flash_size_bytes"].as_u64().unwrap() > 0,
+        "{d:#}"
+    );
     assert_eq!(d["capture"]["outcome"], "matched");
     assert_eq!(d["capture"]["boot_count"], 1);
     let lines = d["capture"]["lines"].as_array().unwrap();

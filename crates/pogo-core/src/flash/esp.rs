@@ -77,6 +77,10 @@ impl Flasher for EspFlasher {
     fn flash(&mut self, image: &FlashImage, opts: &FlashOptions) -> Result<FlashReport, PogoError> {
         let start = Instant::now();
         let chip = self.inner.chip();
+        // Ask now, while the chip is certainly in the bootloader: after writing it may be
+        // running the new app, and an app that prints steadily keeps espflash reading
+        // forever.
+        let info = self.inner.device_info().ok();
         if opts.erase_all {
             self.inner.erase_flash().map_err(esp_error)?;
         }
@@ -114,7 +118,6 @@ impl Flasher for EspFlasher {
         if opts.reset_after {
             self.reset_to_run()?;
         }
-        let info = self.inner.device_info().ok();
         Ok(FlashReport {
             chip: chip.to_string(),
             flash_size_bytes: info.map(|i| u64::from(i.flash_size.size())),

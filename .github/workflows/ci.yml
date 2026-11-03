@@ -67,9 +67,14 @@ jobs:
           version: 1.97.0.0
       - uses: Swatinem/rust-cache@v2.9.3
         with:
-          workspaces: firmware/test-target
+          workspaces: |
+            firmware/test-target
+            firmware/demo
       - name: Build test-target firmware (ESP32)
         working-directory: firmware/test-target
+        run: cargo build --release
+      - name: Build demo firmware (ESP32)
+        working-directory: firmware/demo
         run: cargo build --release
 
   protocol-no-std:
