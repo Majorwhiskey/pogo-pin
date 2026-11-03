@@ -1,3 +1,9 @@
+## [0.1.0-rc.3] - 2026-11-03
+
+### Bug Fixes
+
+- Read chip info before flashing so a chatty app cannot hang it
+- Give flashing a deadline and stop it on the first Ctrl-C
 ## [0.1.0-rc.2] - 2026-11-03
 
 ### Bug Fixes
