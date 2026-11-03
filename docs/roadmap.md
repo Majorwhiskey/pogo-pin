@@ -38,9 +38,11 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 
 ## Phase 3: MCP server
 
-- [ ] `pogo-mcp` crate; `pogo mcp` subcommand; all tools in [§9](mcp.md#9-mcp-server)
+- [x] `pogo-mcp` crate; `pogo mcp` subcommand; all tools in [§9](mcp.md#9-mcp-server)
 - [ ] Verify with the MCP Inspector
-- [ ] Document setup with Claude Code
+- [x] Document setup with Claude Code
+
+Acceptance met 2026-11-03: a Claude Code session flashed the test target on an ESP32-WROOM-32, saw READY, triggered the panic, and reported `src/main.rs:77:25` using only MCP tools.
 
 **Acceptance:** in a Claude Code session, the agent completes "flash the test target, confirm READY, trigger a panic, and report the file and line" using only MCP tools. MCP results equal CLI `data` for the same operations.
 

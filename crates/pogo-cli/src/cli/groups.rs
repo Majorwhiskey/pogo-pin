@@ -34,6 +34,9 @@ pub enum SerialCommand {
         /// Capture until a response line matches
         #[arg(long, value_name = "REGEX")]
         expect: Option<String>,
+        /// ELF to symbolize a panic in the response [default: the device's config `elf`]
+        #[arg(long, value_name = "PATH")]
+        elf: Option<PathBuf>,
     },
 }
 

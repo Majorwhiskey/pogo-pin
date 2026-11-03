@@ -112,3 +112,16 @@ fn bad_hex_and_bad_pattern_are_usage_errors() {
             .contains("invalid expect pattern")
     );
 }
+
+#[test]
+fn elf_flag_is_used_to_symbolize_the_reply_panic() {
+    let args = ["panic", "--expect", "DONE", "--elf", "/nonexistent/app.elf"];
+    let v = json("rust_panic", &args, 7);
+    let codes: Vec<&str> = v["warnings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|w| w["code"].as_str().unwrap())
+        .collect();
+    assert_eq!(codes, ["SYMBOLIZE_FAILED"], "{v:#}");
+}

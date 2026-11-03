@@ -53,6 +53,7 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
             line_ending,
             hex,
             expect,
+            elf,
         }) => commands::serial_send::send(
             &cli.global,
             commands::serial_send::SendArgs {
@@ -60,6 +61,7 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
                 line_ending,
                 hex,
                 expect: expect.as_deref(),
+                elf: elf.as_deref(),
             },
             format,
             style,

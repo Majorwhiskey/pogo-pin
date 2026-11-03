@@ -225,7 +225,7 @@ Additional fields: `device` also carries `port`; `fault` is `{ kind: fail_on|pan
 
 ```
 pogo serial send <DATA | -> [--line-ending lf|crlf|none] [--hex]
-                     [--expect <REGEX>] [--timeout <DURATION>]
+                     [--expect <REGEX>] [--timeout <DURATION>] [--elf <PATH>]
 ```
 
 Writes data (default line ending `lf`; `--hex` accepts `"de ad be ef"`; `-` reads from stdin). With `--expect`, it then runs the capture engine until the pattern matches, inheriting fail-on detection. Output includes `bytes_written` and the response capture.
@@ -235,7 +235,7 @@ Writes data (default line ending `lf`; `--hex` accepts `"de ad be ef"`; `-` read
           "bytes_written": 5, "response": { "outcome": "matched", ... } }
 ```
 
-`response` has the same shape as `serial capture`'s data (without `device`) and is `null` without `--expect`. The line ending is appended to `--hex` and stdin data too; pass `--line-ending none` to avoid it. Default fail-on patterns and the config's `extra_fail_on` apply to the response.
+`response` has the same shape as `serial capture`'s data (without `device`) and is `null` without `--expect`. The line ending is appended to `--hex` and stdin data too; pass `--line-ending none` to avoid it. Default fail-on patterns and the config's `extra_fail_on` apply to the response. A panic in the response is symbolized against `--elf`, else the device's configured `elf` (the MCP `serial_send` tool takes `elf` the same way).
 
 ## 7.8 `pogo run` (the main agent command)
 

@@ -109,6 +109,7 @@ pub fn send_request(p: &SerialSendParams) -> Result<SendRequest, ErrorBody> {
     Ok(SendRequest {
         bytes,
         expect: p.expect.clone(),
+        elf: p.elf.as_ref().map(PathBuf::from),
     })
 }
 

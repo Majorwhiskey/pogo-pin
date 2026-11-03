@@ -23,6 +23,9 @@ Options:
       --expect <REGEX>
           Capture until a response line matches
 
+      --elf <PATH>
+          ELF to symbolize a panic in the response [default: the device's config `elf`]
+
   -h, --help
           Print help (see a summary with '-h')
 

@@ -148,6 +148,9 @@ pub struct SerialSendParams {
     /// Capture until a reply line matches this regex (with fail-on detection). Without
     /// it nothing is read back.
     pub expect: Option<String>,
+    /// ELF used to turn a panic backtrace in the reply into function, file, and line
+    /// (default: the device's configured elf).
+    pub elf: Option<String>,
     /// Deadline for the reply, e.g. "5s" (default: config defaults.timeout, else 5s).
     pub timeout: Option<String>,
     #[serde(flatten)]

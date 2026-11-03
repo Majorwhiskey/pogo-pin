@@ -1,6 +1,7 @@
 //! `pogo serial send`: payload from the argument, `--hex`, or stdin; the rest is core.
 
 use std::io::Read;
+use std::path::Path;
 
 use pogo_core::ops::send::{SendRequest, serial_send};
 use pogo_core::serial::LogLine;
@@ -17,6 +18,7 @@ pub struct SendArgs<'a> {
     pub line_ending: LineEnding,
     pub hex: bool,
     pub expect: Option<&'a str>,
+    pub elf: Option<&'a Path>,
 }
 
 pub fn send(global: &GlobalArgs, args: SendArgs, format: Format, style: &Style) -> Reply {
@@ -32,6 +34,7 @@ pub fn send(global: &GlobalArgs, args: SendArgs, format: Format, style: &Style) 
     let req = SendRequest {
         bytes,
         expect: args.expect.map(str::to_string),
+        elf: args.elf.map(Path::to_path_buf),
     };
     let mut stream = |line: &LogLine| stream_line(format, line);
     let result = serial_send(&selection(global), &req, global.timeout, live(&mut stream));

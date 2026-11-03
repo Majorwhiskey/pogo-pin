@@ -1,5 +1,6 @@
 //! `serial send` as an op.
 
+use std::path::PathBuf;
 use std::time::Duration;
 
 use super::capture::Live;
@@ -22,6 +23,8 @@ pub struct SendRequest {
     pub bytes: Vec<u8>,
     /// Capture until a line matches this; no capture without it.
     pub expect: Option<String>,
+    /// ELF to symbolize a panic in the reply (default: the device's configured `elf`).
+    pub elf: Option<PathBuf>,
 }
 
 /// `timeout`: `None` means the config's `defaults.timeout`, else 5 s.
@@ -97,7 +100,7 @@ pub fn serial_send(
         Ok(d) => d,
         Err(e) => return OpResult::fail(e).with_warnings(warnings),
     };
-    let elf = target.elf(None);
+    let elf = target.elf(req.elf.as_deref());
     if let Some(r) = data.response.as_mut() {
         warnings.extend(symbolize_panic(r, elf.as_deref()));
     }
