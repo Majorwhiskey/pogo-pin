@@ -119,14 +119,18 @@ fn message(text: &str, id: u64) -> Option<Value> {
         .find(|v| v["id"] == id)
 }
 
+/// A private copy per call: Windows will not overwrite a file another test's server
+/// still has open, and the replay path is the device lock key.
 fn fixture(name: &str) -> String {
+    use std::sync::atomic::{AtomicU32, Ordering};
+    static N: AtomicU32 = AtomicU32::new(0);
     let src = format!(
         "{}/../../tests/fixtures/synthetic/{name}.jsonl",
         env!("CARGO_MANIFEST_DIR")
     );
     let dir = std::env::temp_dir().join(format!("pogo-serve-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
-    let dst = dir.join(format!("{name}.jsonl"));
+    let dst = dir.join(format!("{name}-{}.jsonl", N.fetch_add(1, Ordering::SeqCst)));
     std::fs::copy(src, &dst).unwrap();
     dst.display().to_string()
 }
