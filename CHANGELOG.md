@@ -1,4 +1,4 @@
-## [unreleased]
+## [0.1.0-rc.1] - 2026-11-03
 
 ### Features
 
@@ -17,6 +17,7 @@
 - Add probe, gpio, and i2c commands and MCP tools
 - Add power commands and reset via the probe
 - Reset through the probe in serial capture and run
+- Add --elf to serial send; mark Phase 3 acceptance
 
 ### Bug Fixes
 
@@ -30,6 +31,7 @@
 - Add no-new-branches rule to CLAUDE.md
 - Mark Phase 0 complete and start Phase 1
 - Document flash commands; audit serial send; build firmware in CI
+- Mark Phase 2 acceptance; let HIL tests target one of several boards
 
 ### Refactor
 
@@ -45,6 +47,7 @@
 
 - Add test matrix, schema drift, and cargo-deny checks
 - Add license files and crate metadata for release
+- Add release workflow, changelog config, and install docs
 
 ### Other
 

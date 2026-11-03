@@ -17,7 +17,7 @@ directories = "6.0.0"
 espflash = { version = "4.7.0", default-features = false, features = ["serialport"] }
 humantime = "2.4.0"
 object = "0.40.0"
-pogo-protocol = { version = "0.1.0", path = "../pogo-protocol" }
+pogo-protocol = { version = "0.1.0-rc.1", path = "../pogo-protocol" }
 regex = "1.13.1"
 schemars = "1.2.3"
 serde = { version = "1.0.229", features = ["derive"] }

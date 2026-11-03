@@ -1642,7 +1642,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
 name = "pogo-cli"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -1662,7 +1662,7 @@ dependencies = [
 
 [[package]]
 name = "pogo-core"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "addr2line",
  "directories",
@@ -1682,7 +1682,7 @@ dependencies = [
 
 [[package]]
 name = "pogo-mcp"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "humantime",
  "pogo-core",
@@ -1695,7 +1695,7 @@ dependencies = [
 
 [[package]]
 name = "pogo-protocol"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "heapless",
  "postcard",

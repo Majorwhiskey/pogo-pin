@@ -13,7 +13,7 @@ categories = ["embedded", "development-tools"]
 
 [dependencies]
 humantime = "2.4.0"
-pogo-core = { version = "0.1.0", path = "../pogo-core" }
+pogo-core = { version = "0.1.0-rc.1", path = "../pogo-core" }
 rmcp = { version = "3.8.0", features = ["server", "macros", "schemars", "transport-io"] }
 schemars = "1.2.3"
 serde = { version = "1.0.229", features = ["derive"] }
