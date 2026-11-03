@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage.workspace = true
 rust-version.workspace = true
 description = "Agent-friendly hardware workbench for ESP32 boards: flash, reset, capture serial, and drive a probe, with JSON output and an MCP server"
 readme = "../../README.md"

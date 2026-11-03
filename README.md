@@ -110,6 +110,24 @@ Exit code `7` means the target faulted. The agent opens `src/sensors.rs:42`, fix
 
 ---
 
+## Install
+
+pogo is not on crates.io or Homebrew yet. Install it from GitHub with Rust 1.99 or newer (`rustup update`); on Linux, first run `sudo apt install libudev-dev pkg-config`.
+
+```console
+$ cargo install --git https://github.com/Majorwhiskey/pogo-pin pogo-cli
+```
+
+Or clone and build, which is also how to work on pogo:
+
+```console
+$ git clone https://github.com/Majorwhiskey/pogo-pin
+$ cd pogo-pin
+$ cargo install --path crates/pogo-cli
+```
+
+Either way you get the `pogo` binary; check it with `pogo doctor`. Prebuilt binaries will be attached to [GitHub Releases](https://github.com/Majorwhiskey/pogo-pin/releases) once versions are tagged.
+
 ## Documentation
 
 The full specification lives in [`docs/`](docs/). Section numbers (§) are stable across files.

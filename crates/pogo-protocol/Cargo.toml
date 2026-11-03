@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage.workspace = true
 rust-version.workspace = true
 description = "Wire protocol between pogo and its probe firmware (no_std)"
 readme = "../../README.md"

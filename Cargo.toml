@@ -8,6 +8,7 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Majorwhiskey/pogo-pin"
+homepage = "https://github.com/Majorwhiskey/pogo-pin"
 rust-version = "1.99"
 
 [workspace.lints.rust]
@@ -16,3 +17,8 @@ unsafe_code = "forbid"
 [workspace.lints.clippy]
 unwrap_used = "deny"
 expect_used = "deny"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

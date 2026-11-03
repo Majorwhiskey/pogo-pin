@@ -16,4 +16,16 @@
 - Semantic versioning for the tool; `schema_version` versions the JSON contract independently.
 - Generate `CHANGELOG.md` from Conventional Commits with `git-cliff`.
 
+**How it is set up:** `dist-workspace.toml` holds the dist config (cargo-dist 0.32.0); `dist generate` writes `.github/workflows/release.yml` from it, so edit the config, not the workflow. A release builds the five targets above and attaches them to a GitHub release with a shell and a PowerShell installer; Linux builds install `libudev-dev`, and aarch64 Linux builds natively on `ubuntu-24.04-arm`. Homebrew is left out for now (adding it back is `installers += "homebrew"`, `tap = "Majorwhiskey/homebrew-tap"`, `publish-jobs = ["homebrew"]`, a public `homebrew-tap` repo, and a `HOMEBREW_TAP_TOKEN` secret). `cliff.toml` configures git-cliff 2.14.2. The probe `.uf2` files are not attached yet; that waits for the probe firmware.
+
+**Installing without a release:** `cargo install --git https://github.com/Majorwhiskey/pogo-pin pogo-cli`, or clone and `cargo install --path crates/pogo-cli` (see the README).
+
+**Cutting a release:**
+
+1. Set `version` in the workspace `Cargo.toml` and the `pogo-*` path dependency versions.
+2. `git-cliff --tag vX.Y.Z -o CHANGELOG.md` and review it.
+3. Commit, then `cargo package --workspace --offline` and the usual checks.
+4. `git tag vX.Y.Z && git push origin vX.Y.Z`. The release workflow builds the binaries and installers and creates the GitHub release; it needs no secrets.
+5. Optional, later: publish the crates with `cargo login`, then `cargo publish -p pogo-protocol`, `pogo-core`, `pogo-mcp`, `pogo-cli`, in that order. Publishing cannot be undone.
+
 [Back to README](../README.md)
