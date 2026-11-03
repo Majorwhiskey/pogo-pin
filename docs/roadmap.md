@@ -28,13 +28,15 @@ Each phase ends only when its acceptance criteria pass and a human confirms.
 
 ## Phase 2: Flash, reset, run, symbolization
 
-- [ ] `Flasher` trait with espflash implementation; `info`; `flash` for ELF and `.bin`
-- [ ] `reset` (DTR/RTS)
-- [ ] `run` composite
-- [ ] ELF symbolization; Rust panic location parsing
-- [ ] Test-target firmware
+- [x] `Flasher` trait with espflash implementation; `info`; `flash` for ELF and `.bin`
+- [x] `reset` (DTR/RTS)
+- [x] `run` composite
+- [x] ELF symbolization; Rust panic location parsing
+- [x] Test-target firmware
 
 **Acceptance:** `pogo run <test-target ELF> --until READY` exits 0. `serial send panic` (or `run` with a planted panic) exits 7 with `panic.location` pointing at the correct line. With two boards connected and no `--device`, `flash` exits 3 with candidates listed.
+
+Acceptance met 2026-11-03 on two classic ESP32 boards (an ESP32-WROOM-32 devkit with a CH340, and a CP2102 devkit): all three checks pass, and the hardware tests pass on each board.
 
 ## Phase 3: MCP server
 

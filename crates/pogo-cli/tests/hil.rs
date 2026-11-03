@@ -104,12 +104,19 @@ fn panic_is_reported_at_its_line_and_symbolized() {
         return;
     }
     ready();
+    // The board under test: the one POGO_HIL_DEVICE names, else the only one.
+    let wanted = std::env::var("POGO_HIL_DEVICE").ok();
     let (_, devices) = pogo(&["devices"]);
     let port = devices["data"]["devices"]
         .as_array()
         .unwrap()
         .iter()
-        .find(|d| d["kind"] == "esp32_target")
+        .filter(|d| d["kind"] == "esp32_target")
+        .find(|d| {
+            wanted
+                .as_deref()
+                .is_none_or(|w| d["port"] == w || d["usb"]["serial_number"] == w)
+        })
         .unwrap()["port"]
         .as_str()
         .unwrap()
