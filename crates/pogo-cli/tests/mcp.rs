@@ -143,6 +143,7 @@ fn tools_are_listed_without_erase() {
         "gpio_pulse",
         "power_measure",
         "power_switch",
+        "run_tests",
     ] {
         assert!(names.contains(&want), "{want} missing from {names:?}");
     }

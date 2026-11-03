@@ -1,0 +1,358 @@
+{
+  "$defs": {
+    "ErrorBody": {
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ErrorCode"
+        },
+        "details": true,
+        "hint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    },
+    "ErrorCode": {
+      "description": "Stable machine-readable error code. Serialized as `SCREAMING_SNAKE_CASE`.\n\nChanging a code's name or exit code is a breaking change to the agent contract.",
+      "oneOf": [
+        {
+          "enum": [
+            "INTERNAL",
+            "NOT_IMPLEMENTED",
+            "USAGE",
+            "DEVICE_NOT_FOUND",
+            "AMBIGUOUS_DEVICE",
+            "TIMEOUT",
+            "PERMISSION_DENIED",
+            "DEVICE_IO",
+            "PROTOCOL",
+            "PROTOCOL_MISMATCH",
+            "TARGET_FAULT",
+            "GUARDRAIL_REFUSED",
+            "DEVICE_BUSY",
+            "CONFIG_INVALID",
+            "INTERRUPTED"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "CHECK_FAILED",
+          "description": "`pogo doctor` found a failing check.",
+          "type": "string"
+        }
+      ]
+    },
+    "Failure": {
+      "properties": {
+        "lines": {
+          "description": "The last lines captured in the failing step, oldest first.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "message": {
+          "type": "string"
+        },
+        "step": {
+          "description": "1-based step number.",
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "step",
+        "message",
+        "lines"
+      ],
+      "type": "object"
+    },
+    "FlashReport": {
+      "properties": {
+        "chip": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "erased_all": {
+          "type": "boolean"
+        },
+        "flash_size_bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "type": "array"
+        },
+        "reset_after": {
+          "type": "boolean"
+        },
+        "verified": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "chip",
+        "regions",
+        "erased_all",
+        "verified",
+        "reset_after",
+        "duration_ms"
+      ],
+      "type": "object"
+    },
+    "Region": {
+      "properties": {
+        "address": {
+          "description": "Hex, e.g. `0x10000`.",
+          "type": "string"
+        },
+        "bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "kind": {
+          "$ref": "#/$defs/RegionKind"
+        }
+      },
+      "required": [
+        "address",
+        "bytes",
+        "kind"
+      ],
+      "type": "object"
+    },
+    "RegionKind": {
+      "oneOf": [
+        {
+          "enum": [
+            "bootloader",
+            "partition_table",
+            "app"
+          ],
+          "type": "string"
+        },
+        {
+          "const": "raw",
+          "description": "A raw `.bin` written where the caller asked.",
+          "type": "string"
+        }
+      ]
+    },
+    "ResolvedDevice": {
+      "description": "The device a command acted on, echoed as `data.device`.",
+      "properties": {
+        "alias": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port": {
+          "type": "string"
+        },
+        "usb_serial": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "type": "object"
+    },
+    "Status": {
+      "enum": [
+        "passed",
+        "failed"
+      ],
+      "type": "string"
+    },
+    "SuiteData": {
+      "description": "`data` for `pogo test`.",
+      "properties": {
+        "device": {
+          "$ref": "#/$defs/ResolvedDevice"
+        },
+        "failed": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "file": {
+          "type": "string"
+        },
+        "flash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlashReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Set when the suite's firmware was flashed first."
+        },
+        "junit_path": {
+          "description": "Where the JUnit report was written, with `--junit`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "passed": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "tests": {
+          "items": {
+            "$ref": "#/$defs/TestResult"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "file",
+        "device",
+        "tests",
+        "passed",
+        "failed"
+      ],
+      "type": "object"
+    },
+    "TestResult": {
+      "properties": {
+        "duration_ms": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Failure"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/Status"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "duration_ms"
+      ],
+      "type": "object"
+    },
+    "Warning": {
+      "description": "Something worth knowing that did not cause the command to fail.",
+      "properties": {
+        "code": {
+          "description": "Stable `SCREAMING_SNAKE_CASE` code, e.g. `OUTPUT_TRUNCATED`.",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "command": {
+      "description": "Dotted command name, e.g. `serial.capture`.",
+      "type": "string"
+    },
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SuiteData"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Command-specific result. May be present even when `ok` is false (partial results)."
+    },
+    "duration_ms": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ErrorBody"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ok": {
+      "description": "`true` only when the exit code is 0.",
+      "type": "boolean"
+    },
+    "pogo_version": {
+      "type": "string"
+    },
+    "schema_version": {
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/Warning"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "pogo_version",
+    "command",
+    "ok",
+    "duration_ms",
+    "warnings"
+  ],
+  "title": "pogo test envelope",
+  "type": "object"
+}

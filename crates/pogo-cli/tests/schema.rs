@@ -81,6 +81,8 @@ fn all_to_stdout_and_to_dir_match_committed() {
             "run",
             "serial.capture",
             "serial.send",
+            "setup.claude",
+            "test",
         ]
         .map(String::from)
         .into()

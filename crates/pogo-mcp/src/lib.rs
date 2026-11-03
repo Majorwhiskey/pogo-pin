@@ -2,6 +2,7 @@
 //! command and returns the same `data`, plus `error` and `warnings`.
 
 mod convert;
+pub mod http;
 mod params;
 mod probe_params;
 mod probe_tools;
@@ -14,7 +15,7 @@ use rmcp::{ServerHandler, ServiceExt, tool, tool_handler, tool_router};
 use convert::{blocking, capture_request, flash_request, parse_duration, selection};
 use params::{
     DoctorParams, FlashParams, ListDevicesParams, ResetModeParam, ResetParams, RunParams,
-    SerialCaptureParams, SerialSendParams, TargetParams,
+    RunTestsParams, SerialCaptureParams, SerialSendParams, TargetParams,
 };
 use pogo_core::ops;
 
@@ -217,6 +218,29 @@ impl PogoServer {
         })
         .await
     }
+
+    #[tool(
+        description = "Run a hardware test suite (TOML, default pogo-test.toml): flashes \
+            its firmware unless no_flash, then runs each test's steps (reset and wait for a \
+            line, send a line and expect a reply, or wait for a line) on one locked board. \
+            data.tests has each test's status and, for failures, the step, message, and \
+            last lines. Any failure sets error CHECK_FAILED. CHANGES the device's firmware \
+            unless no_flash.",
+        annotations(read_only_hint = false, destructive_hint = true)
+    )]
+    async fn run_tests(&self, Parameters(p): Parameters<RunTestsParams>) -> CallToolResult {
+        let sel = match selection(&p.target) {
+            Ok(s) => s,
+            Err(e) => return convert::fail(e),
+        };
+        let req = ops::suite::SuiteRequest {
+            file: p.file.unwrap_or_else(|| "pogo-test.toml".into()).into(),
+            no_flash: p.no_flash,
+            fail_fast: p.fail_fast,
+            junit: p.junit.map(Into::into),
+        };
+        blocking(move || ops::suite::run_suite(&sel, &req, None)).await
+    }
 }
 
 #[tool_handler(router = self.tool_router)]
@@ -239,4 +263,10 @@ pub fn serve_stdio() -> Result<(), String> {
         service.waiting().await.map_err(|e| e.to_string())?;
         Ok(())
     })
+}
+
+/// Serve MCP over HTTP until the process is stopped (`pogo serve`).
+pub fn serve_http(opts: http::ServeOptions) -> Result<(), String> {
+    let runtime = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    runtime.block_on(http::serve(opts))
 }

@@ -1,0 +1,19 @@
+# Hardware tests for the test firmware: `pogo test firmware/test-target/pogo-test.toml`.
+# Build it first with `cargo build --release` in this directory.
+firmware = "target/xtensa-esp32-none-elf/release/test-target"
+
+[[test]]
+name = "boots to READY within 2 s"
+steps = [{ reset = true, until = "^READY$", within = "2s" }]
+
+[[test]]
+name = "answers ping"
+steps = [{ send = "ping", expect = "^pong$", timeout = "2s" }]
+
+[[test]]
+name = "finishes a busy command"
+steps = [{ send = "busy 200", expect = "^done$", timeout = "2s" }]
+
+[[test]]
+name = "reboots on request"
+steps = [{ send = "reboot", expect = "^READY$", timeout = "5s" }]

@@ -131,6 +131,27 @@ pub enum Command {
         no_flash: bool,
     },
 
+    /// Run a hardware test suite (pogo-test.toml) and report pass/fail, optionally as JUnit
+    #[command(after_long_help = crate::help_suite::TEST)]
+    Test {
+        /// Suite file
+        #[arg(default_value = "pogo-test.toml")]
+        file: PathBuf,
+        /// Also write a JUnit XML report to this file
+        #[arg(long, value_name = "PATH")]
+        junit: Option<PathBuf>,
+        /// Do not flash the suite's firmware first
+        #[arg(long)]
+        no_flash: bool,
+        /// Stop after the first failing test
+        #[arg(long)]
+        fail_fast: bool,
+    },
+
+    /// Connect pogo to an AI coding tool
+    #[command(subcommand)]
+    Setup(SetupCommand),
+
     /// I2C bus access through the probe
     #[command(subcommand)]
     I2c(I2cCommand),
@@ -175,6 +196,21 @@ pub enum Command {
     /// Start the MCP server on stdio
     #[command(after_long_help = help::MCP)]
     Mcp,
+
+    /// Serve the MCP tools over HTTP so remote agents can use this machine's boards
+    #[command(after_long_help = crate::help_serve::SERVE)]
+    Serve {
+        /// Address and port to listen on
+        #[arg(long, default_value = "127.0.0.1:7646")]
+        bind: std::net::SocketAddr,
+        /// Bearer token clients must send (required for non-loopback addresses)
+        #[arg(long, env = "POGO_SERVE_TOKEN", hide_env_values = true)]
+        token: Option<String>,
+        /// Host header value to accept, e.g. bench.local (repeatable; default: any, when
+        /// a token is set on a non-loopback address)
+        #[arg(long = "allow-host", value_name = "HOST")]
+        allow_hosts: Vec<String>,
+    },
 }
 
 impl Command {
@@ -189,6 +225,8 @@ impl Command {
             Command::Serial(SerialCommand::Capture { .. }) => "serial.capture",
             Command::Serial(SerialCommand::Send { .. }) => "serial.send",
             Command::Run { .. } => "run",
+            Command::Test { .. } => "test",
+            Command::Setup(SetupCommand::Claude { .. }) => "setup.claude",
             Command::I2c(I2cCommand::Scan { .. }) => "i2c.scan",
             Command::I2c(I2cCommand::Read { .. }) => "i2c.read",
             Command::I2c(I2cCommand::Write { .. }) => "i2c.write",
@@ -207,6 +245,7 @@ impl Command {
             Command::Schema { .. } => "schema",
             Command::Completions { .. } => "completions",
             Command::Mcp => "mcp",
+            Command::Serve { .. } => "serve",
         }
     }
 }

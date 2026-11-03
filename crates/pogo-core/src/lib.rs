@@ -16,6 +16,7 @@ pub mod reset;
 pub mod run;
 pub mod schema;
 pub mod serial;
+pub mod suite;
 pub mod symbolize;
 pub mod transport;
 

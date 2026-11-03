@@ -33,7 +33,7 @@ Classification uses USB IDs:
 | `0403:6001`, `0403:6015` | FTDI bridge (possible ESP32 board) |
 | `2e8a:*` + product string `pogo-probe` | pogo probe |
 
-`alias` is the first config device (by name) whose `match` fields all match; an unrecognized port with an alias is shown without `--all`. On macOS only the `/dev/cu.*` node is listed, not its `/dev/tty.*` twin. Results are sorted by port. `locked_by` stays `null` until device locks land (Phase 1).
+`alias` is the first config device (by name) whose `match` fields all match; an unrecognized port with an alias is shown without `--all`. On macOS only the `/dev/cu.*` node is listed, not its `/dev/tty.*` twin. Results are sorted by port. `locked_by` is always `null` for now: listing does not read lock holders yet. A command on a busy device still reports the holder's pid and command in its `DEVICE_BUSY` error.
 
 ```json
 "data": {
@@ -219,7 +219,7 @@ Task watchdog got triggered
 
 **Ctrl-C / SIGTERM:** the capture stops, the device lock is released, and the partial envelope is printed with outcome `interrupted`, error `INTERRUPTED`, and exit 130. A second Ctrl-C exits immediately.
 
-Additional fields: `device` also carries `port`; `fault` is `{ kind: fail_on|panic|unexpected_reboot, pattern, line_index, t_ms }` when the outcome is `fault` (otherwise `null`); a line cut at `--max-line-len` carries `"truncated": true`. `--reset` toggles DTR/RTS following esptool's hard-reset sequence (not yet verified on the bench boards). Without `--reset`, boots are counted but never treated as unexpected. In human mode lines stream to stdout as they arrive, followed by a one-line summary; in `jsonl` mode each line is a `{"type":"line", ...}` event.
+Additional fields: `device` also carries `port`; `fault` is `{ kind: fail_on|panic|unexpected_reboot, pattern, line_index, t_ms }` when the outcome is `fault` (otherwise `null`); a line cut at `--max-line-len` carries `"truncated": true`. `--reset` toggles DTR/RTS following esptool's hard-reset sequence (verified on two classic ESP32 boards), or uses the probe for a device configured with `reset = "probe"` (see `reset`). Without `--reset`, boots are counted but never treated as unexpected. In human mode lines stream to stdout as they arrive, followed by a one-line summary; in `jsonl` mode each line is a `{"type":"line", ...}` event.
 
 `--record <FILE>` saves the raw byte stream with timestamps as JSONL, which is useful for bug reports and for test fixtures ([§12](testing.md#12-testing-strategy)).
 
@@ -336,7 +336,7 @@ pogo mcp                              # start the MCP server on stdio (§9)
 
 ### `pogo schema`
 
-Prints the JSON Schema (2020-12) for a command's envelope as a bare document, not wrapped in an envelope. `--all` prints an object keyed by command name; `--all --out DIR` writes `DIR/<command>.json` and replies with `"data": { "files": [...] }`. Only commands with a defined data shape have schemas (currently `devices`, `config.show`, `config.path`, `config.validate`); other known commands give `NOT_IMPLEMENTED` (exit 1) and unknown names give `USAGE` (exit 2). `cargo test` fails if `schemas/` is stale.
+Prints the JSON Schema (2020-12) for a command's envelope as a bare document, not wrapped in an envelope. `--all` prints an object keyed by command name; `--all --out DIR` writes `DIR/<command>.json` and replies with `"data": { "files": [...] }`. Every command with a data shape has a schema: `devices`, `doctor`, `info`, `flash`, `reset`, `run`, `serial.capture`, `serial.send`, `i2c.*`, `gpio.*`, `power.*`, `probe.*`, and `config.*`. Commands without one (`schema`, `completions`, `mcp`) give `NOT_IMPLEMENTED` (exit 1), and unknown names give `USAGE` (exit 2). `cargo test` fails if `schemas/` is stale.
 
 ### `pogo config`
 
@@ -349,5 +349,78 @@ Files are discovered and merged as described in [§10](configuration.md). Tables
 - `config validate`: `"data": { "files": [ "/repo/pogo.toml" ], "valid": true }`
 
 Unknown keys, wrong types, bad durations, invalid regexes in `serial.extra_fail_on`, malformed `i2c_protected_addrs`, an unsupported `schema`, and devices missing `kind` or `match` (or pins missing `probe_pin`) after merging all fail with `CONFIG_INVALID` (exit 10). The message names the file, and the line for per-file errors.
+
+## 7.14 `pogo test` (hardware test suites)
+
+```
+pogo test [FILE] [--junit <PATH>] [--no-flash] [--fail-fast]
+```
+
+Runs a TOML suite file (default `pogo-test.toml`) on one board, locked for the whole run, and reports each test as passed or failed. It is how firmware gets regression tests on real hardware, in CI or from an agent.
+
+```toml
+firmware = "target/xtensa-esp32-none-elf/release/app"   # optional; flashed first
+
+[[test]]
+name = "boots to READY within 2 s"
+steps = [{ reset = true, until = "^READY$", within = "2s" }]
+
+[[test]]
+name = "answers ping"
+steps = [{ send = "ping", expect = "^pong$", timeout = "2s" }]
+```
+
+Each step is exactly one of:
+
+| Step | Does | Passes when |
+|---|---|---|
+| `{ reset = true, until = "<regex>", within = "<duration>" }` | Resets the board (as `serial capture --reset`) and captures from the first boot byte | `until` matches (and, with `within`, no later than that after the capture starts); without `until`, the capture runs to `timeout` without a fault |
+| `{ send = "<text>", expect = "<regex>" }` | Sends the text plus `\n` (as `serial send`) | `expect` matches in the reply; without `expect`, the write succeeds |
+| `{ wait = "<regex>" }` | Captures without sending or resetting | the pattern matches |
+
+`timeout` is optional on every step (reset and wait 10 s, send 5 s). The default fail-on patterns (panics, aborts, brownouts, watchdogs) and the config's `extra_fail_on` fail a step, and panics are symbolized against `firmware`. `firmware` is relative to the suite file and flashed with verification (120 s deadline) unless `--no-flash`. Tests run in file order; a failed test does not stop the rest unless `--fail-fast`. Unknown keys, a step with zero or several kinds, misplaced keys (`until` only with `reset`, `expect` only with `send`), bad patterns, and bad durations are `USAGE` errors (exit 2) naming the test and step.
+
+Exit codes: 0 when every test passed; `CHECK_FAILED` (exit 1) when any failed, with each failure in `data`; device errors as usual (3, 6, 9). `--junit PATH` also writes a JUnit XML report (one `testcase` per test, failures with the step, message, and last lines), which GitHub Actions, GitLab, and Jenkins read. The MCP tool `run_tests` takes the same options.
+
+```json
+"data": { "file": "pogo-test.toml", "device": { ... }, "flash": null, "passed": 1, "failed": 1,
+          "tests": [ { "name": "answers ping", "status": "failed", "duration_ms": 2004,
+                       "failure": { "step": 1, "message": "no line matched ^pong$ within 2s", "lines": [ ... ] } } ],
+          "junit_path": "results.xml" }
+```
+
+`firmware/test-target/pogo-test.toml` is a working example for the test firmware.
+
+## 7.15 `pogo setup claude`
+
+```
+pogo setup claude [--scope local|project|user] [--plugin] [--dry-run]
+```
+
+Connects pogo to Claude Code in one step. By default it runs `claude mcp add --scope user pogo -- <absolute path of this pogo> mcp`, after `claude mcp get pogo` shows no server of that name; an existing registration is left alone (`status: already_registered`). With `--plugin` it runs `claude plugin install pogo --marketplace Majorwhiskey/pogo-pin --scope <scope>` instead. `--dry-run` reports the command (`status: planned`) without changing Claude Code's configuration. The `claude` CLI is looked up on PATH like a shell does, skipping files that are not executable. A missing or failing `claude` is `CHECK_FAILED` (exit 1).
+
+```json
+"data": { "claude": "/opt/homebrew/bin/claude", "method": "mcp", "scope": "user",
+          "command": ["claude", "mcp", "add", "--scope", "user", "pogo", "--", "/Users/me/.cargo/bin/pogo", "mcp"],
+          "status": "added", "next_steps": [ ... ] }
+```
+
+## 7.16 `pogo serve` (remote bench)
+
+```
+pogo serve [--bind <ADDR:PORT>] [--token <TOKEN>] [--allow-host <HOST>]...
+```
+
+Serves the MCP tools of `pogo mcp` over Streamable HTTP at `http://<bind>/mcp`, so agents on other machines (Claude Code on the web, CI runners, teammates) can use the boards connected to this one. It runs until stopped and prints one line to stderr: the URL and whether a token is required (never the token).
+
+- **Address:** `127.0.0.1:7646` by default (7646 spells POGO on a phone keypad).
+- **Token:** with `--token` or, better, `POGO_SERVE_TOKEN`, every request must carry `Authorization: Bearer <token>`; anything else gets HTTP 401. Binding to a non-loopback address without a token is refused (`USAGE`, exit 2). Paths other than `/mcp` get 404.
+- **Host check:** on loopback, only `localhost`, `127.0.0.1`, and `::1` are accepted as the `Host` header (guards against DNS rebinding). On other addresses any host is accepted unless `--allow-host` lists them.
+- **No TLS.** Reach a remote bench over SSH port forwarding (`ssh -L 7646:127.0.0.1:7646 bench`), Tailscale, or a TLS reverse proxy; the token travels in a header, so do not expose plain HTTP to the internet.
+- Every client shares the device locks, so two agents cannot flash the same board at once; `wait_lock` works as with stdio.
+
+```console
+$ claude mcp add --transport http pogo http://bench.local:7646/mcp --header "Authorization: Bearer $POGO_SERVE_TOKEN"
+```
 
 [Back to README](../README.md)

@@ -178,3 +178,19 @@ pub struct RunParams {
     #[serde(flatten)]
     pub target: TargetParams,
 }
+
+#[derive(Debug, Default, Deserialize, JsonSchema)]
+pub struct RunTestsParams {
+    /// Suite file path (default "pogo-test.toml" in the server's working directory).
+    pub file: Option<String>,
+    /// Also write a JUnit XML report to this path.
+    pub junit: Option<String>,
+    /// Do not flash the suite's firmware first.
+    #[serde(default)]
+    pub no_flash: bool,
+    /// Stop after the first failing test.
+    #[serde(default)]
+    pub fail_fast: bool,
+    #[serde(flatten)]
+    pub target: TargetParams,
+}

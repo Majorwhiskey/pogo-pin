@@ -50,26 +50,30 @@ Acceptance met 2026-11-03: a Claude Code session flashed the test target on an E
 
 ## Phase 4: Probe firmware, GPIO, I2C
 
-- [ ] `pogo-protocol` crate (no_std) with property tests
+- [x] `pogo-protocol` crate (no_std) with property tests
 - [ ] Probe firmware: USB CDC, framing, handshake, pin allow-list, safe states, GPIO, I2C
-- [ ] Host probe client; `probe info|selftest`, `gpio`, `i2c`
-- [ ] `reset --via probe`
+- [x] Host probe client; `probe info|selftest`, `gpio`, `i2c` (tested against a simulated probe)
+- [x] `reset --via probe` (host side; also used by `serial capture --reset` and `run`)
 - [ ] `.uf2` build
+
+The host side is done; the firmware and the acceptance checks wait for probe hardware (a Pico and an INA226).
 
 **Acceptance:** `probe info` returns versions. `i2c scan` finds a BME280 at `0x76` or `0x77`. `reset --via probe` reboots the target and capture sees the boot. Unplugging the probe releases all pins within 100 ms (verified with an LED or multimeter).
 
 ## Phase 5: Power
 
-- [ ] INA226 sampling and streaming on the probe; host statistics and CSV export
-- [ ] `power on|off|cycle` with guardrails
+- [ ] INA226 sampling and streaming on the probe
+- [x] Host statistics and CSV export (tested against a simulated probe)
+- [x] `power on|off|cycle` with guardrails (host side)
 
 **Acceptance:** idle current is within ±5% of a multimeter reading. Wi-Fi transmit peaks are visible in `max`/`p95`. A script doing `power cycle` then `serial capture --until READY` works end to end.
 
 ## Phase 6: Polish and release
 
-- [ ] `docs/agent-contract.md`, `docs/hardware.md`, wiring photo
-- [ ] Release automation, Homebrew tap, crates.io publish
-- [ ] Demo recording ([§16](launch.md#16-launch-and-showcase-checklist))
+- [ ] `docs/agent-contract.md`, `docs/hardware.md`, wiring photo (the docs exist; the photo waits for the probe bench)
+- [x] Release automation: cargo-dist builds five platforms with shell and PowerShell installers; v0.1.0 released 2026-11-03
+- [ ] Homebrew tap, crates.io publish (deferred; see [release.md](release.md))
+- [ ] Demo recording ([§16](launch.md#16-launch-and-showcase-checklist)); firmware, prompt, and steps are ready in [demo.md](demo.md)
 
 **Acceptance:** on a fresh machine, install via Homebrew or the shell installer, `pogo doctor` passes, and the demo is reproducible.
 

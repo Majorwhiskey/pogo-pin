@@ -155,3 +155,25 @@ pub enum ConfigCommand {
     #[command(after_long_help = help::CONFIG_VALIDATE)]
     Validate,
 }
+
+#[derive(Debug, Subcommand)]
+pub enum SetupCommand {
+    /// Register pogo's MCP server with Claude Code (or install the pogo plugin)
+    #[command(after_long_help = crate::help_setup::SETUP_CLAUDE)]
+    Claude {
+        /// Where to register: local (this project, you only), project (shared via the
+        /// repository), or user (every project)
+        #[arg(long, value_enum, default_value_t = SetupScope::User)]
+        scope: SetupScope,
+        /// Install the pogo plugin (MCP server plus skills) instead
+        #[arg(long)]
+        plugin: bool,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum SetupScope {
+    Local,
+    Project,
+    User,
+}

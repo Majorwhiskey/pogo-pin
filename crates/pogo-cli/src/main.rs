@@ -1,6 +1,9 @@
 mod cli;
 mod commands;
 mod help;
+mod help_serve;
+mod help_setup;
+mod help_suite;
 mod interrupt;
 mod output;
 
@@ -74,6 +77,13 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
             capture,
             no_flash,
         } => commands::run::run(&cli.global, &flash, &capture, no_flash, format, style),
+        Command::Test {
+            file,
+            junit,
+            no_flash,
+            fail_fast,
+        } => commands::suite::run(&cli.global, file, junit, no_flash, fail_fast, style),
+        Command::Setup(cmd) => commands::setup::run(&cli.global, &cmd, style),
         Command::Power(cmd) => commands::power::run(&cli.global, &cmd, style),
         Command::Probe(cmd) => commands::probe::probe(&cli.global, &cmd, style),
         Command::Gpio(cmd) => commands::probe::gpio(&cli.global, &cmd, style),
@@ -98,6 +108,51 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
                 Ok(()) => std::process::exit(0),
                 Err(e) => {
                     eprintln!("error[INTERNAL]: MCP server failed: {e}");
+                    std::process::exit(1);
+                }
+            }
+        }
+        Command::Serve {
+            bind,
+            token,
+            allow_hosts,
+        } => {
+            if !bind.ip().is_loopback() && token.is_none() {
+                return Reply::error(
+                    ErrorBody::new(
+                        ErrorCode::Usage,
+                        format!("refusing to serve on {bind} without a token"),
+                    )
+                    .with_hint(
+                        "Set POGO_SERVE_TOKEN (or --token), or bind to 127.0.0.1 and reach it \
+                         over SSH or Tailscale.",
+                    ),
+                );
+            }
+            // Loopback keeps rmcp's loopback-only Host check unless hosts are given.
+            let allowed_hosts = if bind.ip().is_loopback() && allow_hosts.is_empty() {
+                None
+            } else {
+                Some(allow_hosts)
+            };
+            let auth = if token.is_some() {
+                "token required"
+            } else {
+                "no token"
+            };
+            eprintln!(
+                "pogo serve: MCP at http://{bind}{} ({auth}); Ctrl-C to stop",
+                pogo_mcp::http::PATH
+            );
+            let opts = pogo_mcp::http::ServeOptions {
+                bind,
+                token,
+                allowed_hosts,
+            };
+            match pogo_mcp::serve_http(opts) {
+                Ok(()) => std::process::exit(0),
+                Err(e) => {
+                    eprintln!("error[INTERNAL]: {e}");
                     std::process::exit(1);
                 }
             }

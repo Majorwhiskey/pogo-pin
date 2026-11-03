@@ -1,0 +1,14 @@
+{
+  "name": "pogo-pin",
+  "description": "The pogo plugin: ESP32 hardware tools for Claude Code",
+  "owner": {
+    "name": "Amogh Ukkadgatri"
+  },
+  "plugins": [
+    {
+      "name": "pogo",
+      "source": "./plugin",
+      "description": "Flash, run, test, and debug ESP32 boards from Claude Code through pogo's MCP tools"
+    }
+  ]
+}

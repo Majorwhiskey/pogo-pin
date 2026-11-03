@@ -13,10 +13,12 @@ use crate::ops::i2c::{I2cReadData, I2cScanData, I2cWriteData};
 use crate::ops::power::{PowerCycleData, PowerSwitchData};
 use crate::ops::power_measure::PowerMeasureData;
 use crate::ops::probe::{ProbeInfoData, SelftestData};
+use crate::ops::setup::SetupClaudeData;
 use crate::reset::ResetData;
 use crate::run::RunData;
 use crate::serial::send::SerialSendData;
 use crate::serial::session::SerialCaptureData;
+use crate::suite::SuiteData;
 
 /// Commands whose `data` shape is defined, in the order `schema --all` emits them.
 pub const COMMANDS_WITH_SCHEMA: &[&str] = &[
@@ -26,6 +28,8 @@ pub const COMMANDS_WITH_SCHEMA: &[&str] = &[
     "flash",
     "reset",
     "run",
+    "test",
+    "setup.claude",
     "serial.capture",
     "serial.send",
     "i2c.scan",
@@ -54,6 +58,8 @@ pub fn envelope_schema(command: &str) -> Option<Value> {
         "flash" => schema_for!(Envelope<FlashData>),
         "reset" => schema_for!(Envelope<ResetData>),
         "run" => schema_for!(Envelope<RunData>),
+        "test" => schema_for!(Envelope<SuiteData>),
+        "setup.claude" => schema_for!(Envelope<SetupClaudeData>),
         "serial.capture" => schema_for!(Envelope<SerialCaptureData>),
         "serial.send" => schema_for!(Envelope<SerialSendData>),
         "i2c.scan" => schema_for!(Envelope<I2cScanData>),

@@ -16,6 +16,8 @@ pub mod probe_reset;
 pub mod reset;
 pub mod run;
 pub mod send;
+pub mod setup;
+pub mod suite;
 pub mod target;
 
 use std::time::Duration;

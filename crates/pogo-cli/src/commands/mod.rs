@@ -11,4 +11,6 @@ pub mod run;
 pub mod schema;
 pub mod serial;
 pub mod serial_send;
+pub mod setup;
+pub mod suite;
 pub mod target;

@@ -14,6 +14,8 @@ Commands:
   reset        Reset the target into run mode or the bootloader
   serial       Capture and send serial data
   run          Flash, reset, and capture in one step (the main agent command)
+  test         Run a hardware test suite (pogo-test.toml) and report pass/fail, optionally as JUnit
+  setup        Connect pogo to an AI coding tool
   i2c          I2C bus access through the probe
   gpio         GPIO control through the probe
   power        Current measurement and power switching through the probe
@@ -22,6 +24,7 @@ Commands:
   schema       Print the JSON Schema for a command's envelope
   completions  Print shell completions
   mcp          Start the MCP server on stdio
+  serve        Serve the MCP tools over HTTP so remote agents can use this machine's boards
   help         Print this message or the help of the given subcommand(s)
 
 Options:

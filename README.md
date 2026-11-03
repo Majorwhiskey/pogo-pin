@@ -136,6 +136,14 @@ $ cargo install --path crates/pogo-cli
 
 Any of these gives you the `pogo` binary; check it with `pogo doctor`.
 
+**Hardware tests in CI:** `pogo test` runs a `pogo-test.toml` suite on the board and can write a JUnit report ([§7.14](docs/commands.md#714-pogo-test-hardware-test-suites)). **A remote bench:** `pogo serve` lets agents on other machines use this machine's boards over HTTP with a token ([§7.16](docs/commands.md#716-pogo-serve-remote-bench)).
+
+**With Claude Code:** run `pogo setup claude` to register pogo's MCP tools, or install the pogo plugin, which adds skills that teach Claude the hardware workflow:
+
+```console
+$ claude plugin install pogo --marketplace Majorwhiskey/pogo-pin
+```
+
 ## Documentation
 
 The full specification lives in [`docs/`](docs/). Section numbers (§) are stable across files.
@@ -156,6 +164,10 @@ The full specification lives in [`docs/`](docs/). Section numbers (§) are stabl
 | 14 | [Instructions for Claude Code](docs/claude-code.md) |
 | 15 | [CI, release, and distribution](docs/release.md) |
 | 16 | [Launch and showcase checklist](docs/launch.md) |
+| – | [Demo: an agent fixes a firmware bug](docs/demo.md) |
+| – | [Measured numbers](docs/measurements.md) |
+
+What changed in each release is in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
