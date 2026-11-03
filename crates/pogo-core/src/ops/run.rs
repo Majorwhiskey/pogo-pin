@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use super::capture::{CaptureRequest, Live, capture_locked, check_patterns};
-use super::flash::{FlashRequest, flash_target, prepare};
+use super::flash::{DEFAULT_FLASH_TIMEOUT, FlashRequest, flash_target, prepare};
 use super::outcome::{outcome_error, symbolize_panic};
 use super::target::{Selection, acquire};
 use super::{DEFAULT_CAPTURE_TIMEOUT, OpResult};
@@ -36,7 +36,13 @@ pub fn run(
     let mut warnings = Vec::new();
     let (report, plan) = match &prepared {
         None => (None, None),
-        Some(p) => match flash_target(&target, p, dry_run) {
+        Some(p) => match flash_target(
+            &target,
+            p,
+            dry_run,
+            DEFAULT_FLASH_TIMEOUT,
+            live.cancel.as_ref(),
+        ) {
             Ok((data, w)) => {
                 warnings.extend(w);
                 (data.report, data.plan)

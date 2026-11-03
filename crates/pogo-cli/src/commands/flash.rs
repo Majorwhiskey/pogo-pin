@@ -5,6 +5,7 @@ use pogo_core::ops::flash::{self, FlashRequest};
 
 use crate::cli::{FlashArgs, GlobalArgs};
 use crate::commands::target::{reply, selection};
+use crate::interrupt::interrupt_flag;
 use crate::output::{Render, Reply, Style};
 
 pub fn info(global: &GlobalArgs, style: &Style) -> Reply {
@@ -17,6 +18,8 @@ pub fn flash(global: &GlobalArgs, args: &FlashArgs, style: &Style) -> Reply {
         &flash_request(args),
         !args.no_reset,
         global.dry_run,
+        global.timeout,
+        Some(&interrupt_flag()),
     );
     reply(result, style)
 }

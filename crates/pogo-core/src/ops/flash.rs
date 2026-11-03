@@ -1,15 +1,24 @@
 //! `info` and `flash` as ops; flashing is also the first step of `run`.
 
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc;
+use std::time::Duration;
 
 use super::target::{Selection, Target, acquire};
 use super::{OpResult, usage};
 use crate::audit::{self, AuditEntry};
+use crate::deadline::Deadline;
 use crate::envelope::{ErrorBody, Warning};
+use crate::error::{ErrorCode, PogoError};
 use crate::flash::esp::EspFlasher;
 use crate::flash::{
     FlashData, FlashImage, FlashOptions, FlashPlan, Flasher, InfoData, check_guardrails,
 };
+
+/// `flash`'s deadline when `--timeout` is not given (docs/agent-contract.md §6.6).
+pub const DEFAULT_FLASH_TIMEOUT: Duration = Duration::from_secs(120);
 
 /// Everything `flash` can be asked to do (docs/commands.md §7.4).
 #[derive(Debug, Clone, Default)]
@@ -86,11 +95,14 @@ pub fn info(sel: &Selection) -> OpResult<InfoData> {
     }
 }
 
+/// `timeout`: `None` means 120 s. `cancel` stops waiting when set (Ctrl-C).
 pub fn flash(
     sel: &Selection,
     req: &FlashRequest,
     reset_after: bool,
     dry_run: bool,
+    timeout: Option<Duration>,
+    cancel: Option<&Arc<AtomicBool>>,
 ) -> OpResult<FlashData> {
     let prepared = match prepare(req, reset_after) {
         Ok(p) => p,
@@ -100,7 +112,8 @@ pub fn flash(
         Ok(t) => t,
         Err(e) => return OpResult::fail(e),
     };
-    match flash_target(&target, &prepared, dry_run) {
+    let timeout = timeout.unwrap_or(DEFAULT_FLASH_TIMEOUT);
+    match flash_target(&target, &prepared, dry_run, timeout, cancel) {
         Ok((data, warnings)) => OpResult::ok(data).with_warnings(warnings),
         Err(e) => OpResult::fail(e),
     }
@@ -112,6 +125,8 @@ pub fn flash_target(
     target: &Target,
     p: &Prepared,
     dry_run: bool,
+    timeout: Duration,
+    cancel: Option<&Arc<AtomicBool>>,
 ) -> Result<(FlashData, Vec<Warning>), ErrorBody> {
     check_guardrails(&p.image, &p.opts, &target.device)?;
     if dry_run {
@@ -129,17 +144,15 @@ pub fn flash_target(
         .chip
         .clone()
         .or_else(|| target.device_config().and_then(|c| c.chip.clone()));
-    let result = EspFlasher::connect(
-        &d.port,
-        d.usb_ids,
-        chip.as_deref(),
-        p.flash_baud,
-        p.opts.verify,
-    )
-    .and_then(|mut f| f.flash(&p.image, &p.opts));
+    let (port, usb_ids, baud) = (d.port.clone(), d.usb_ids, p.flash_baud);
+    let (image, opts) = (p.image.clone(), p.opts.clone());
+    let result = bounded(Deadline::after(timeout), cancel, move || {
+        EspFlasher::connect(&port, usb_ids, chip.as_deref(), baud, opts.verify)
+            .and_then(|mut f| f.flash(&image, &opts))
+    });
     let outcome = match &result {
         Ok(_) => "ok",
-        Err(e) => e.code().as_str(),
+        Err(e) => e.code.as_str(),
     };
     let args = p.audit_args.clone();
     let entry = AuditEntry::new("flash", &d.port, d.usb_serial.as_deref(), args, outcome);
@@ -154,4 +167,98 @@ pub fn flash_target(
         plan: None,
     };
     Ok((data, warnings))
+}
+
+/// Run `work` on its own thread and stop waiting at the deadline or when `cancel` is set.
+/// espflash calls cannot be interrupted and can block indefinitely on a misbehaving
+/// port, so a worker that never returns is left behind holding the port; the CLI exits
+/// right after, which ends it.
+fn bounded<T: Send + 'static>(
+    deadline: Deadline,
+    cancel: Option<&Arc<AtomicBool>>,
+    work: impl FnOnce() -> Result<T, PogoError> + Send + 'static,
+) -> Result<T, ErrorBody> {
+    const POLL: Duration = Duration::from_millis(50);
+    let (tx, rx) = mpsc::channel();
+    std::thread::spawn(move || {
+        let _ = tx.send(work());
+    });
+    loop {
+        if cancel.is_some_and(|c| c.load(Ordering::SeqCst)) {
+            return Err(ErrorBody::new(
+                ErrorCode::Interrupted,
+                "interrupted while flashing; the board may hold a partial image",
+            )
+            .with_hint("Flash it again before running it."));
+        }
+        let Some(left) = deadline.remaining() else {
+            return Err(ErrorBody::new(
+                ErrorCode::Timeout,
+                "flashing did not finish before the deadline; the board or port may be stuck",
+            )
+            .with_hint(
+                "Unplug and replug the board, then retry (raise --timeout for large \
+                 images). An MCP server must be restarted: the stuck flash keeps the port.",
+            ));
+        };
+        match rx.recv_timeout(left.min(POLL)) {
+            Ok(result) => return result.map_err(ErrorBody::from),
+            Err(mpsc::RecvTimeoutError::Timeout) => {}
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err(
+                    PogoError::Internal("flash worker stopped without a result".into()).into(),
+                );
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn slow() -> Result<u8, PogoError> {
+        std::thread::sleep(Duration::from_secs(5));
+        Ok(1)
+    }
+
+    #[test]
+    fn finished_work_returns_its_result() {
+        let r = bounded(Deadline::after(Duration::from_secs(5)), None, || Ok(7));
+        assert_eq!(r.unwrap(), 7);
+        let r: Result<u8, _> = bounded(Deadline::after(Duration::from_secs(5)), None, || {
+            Err(PogoError::DeviceIo("gone".into()))
+        });
+        assert_eq!(r.unwrap_err().code, ErrorCode::DeviceIo);
+    }
+
+    #[test]
+    fn stuck_work_times_out_at_the_deadline() {
+        let start = std::time::Instant::now();
+        let r = bounded(Deadline::after(Duration::from_millis(200)), None, slow);
+        assert_eq!(r.unwrap_err().code, ErrorCode::Timeout);
+        assert!(
+            start.elapsed() < Duration::from_secs(1),
+            "{:?}",
+            start.elapsed()
+        );
+    }
+
+    #[test]
+    fn cancel_stops_waiting() {
+        let cancel = Arc::new(AtomicBool::new(false));
+        let setter = Arc::clone(&cancel);
+        std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(100));
+            setter.store(true, Ordering::SeqCst);
+        });
+        let start = std::time::Instant::now();
+        let r = bounded(Deadline::after(Duration::from_secs(5)), Some(&cancel), slow);
+        assert_eq!(r.unwrap_err().code, ErrorCode::Interrupted);
+        assert!(
+            start.elapsed() < Duration::from_secs(1),
+            "{:?}",
+            start.elapsed()
+        );
+    }
 }

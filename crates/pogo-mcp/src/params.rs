@@ -72,6 +72,8 @@ pub struct FlashParams {
     /// Check guardrails and report the plan without touching the device.
     #[serde(default)]
     pub dry_run: bool,
+    /// Deadline for the whole flash, e.g. "300s" for a large image (default 120s).
+    pub timeout: Option<String>,
     #[serde(flatten)]
     pub target: TargetParams,
 }

@@ -86,7 +86,7 @@ Every command has a deadline. `--timeout` overrides the default.
 | `reset` | 5s |
 | `serial capture` | 10s |
 | `serial send` | 5s |
-| `run` | flash timeout + capture timeout |
+| `run` | flash timeout (120s) + capture timeout (`--timeout` sets the capture's) |
 | `i2c`, `gpio`, `probe` | 2s |
 | `power measure` | `--duration` + 2s |
 

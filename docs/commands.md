@@ -109,6 +109,8 @@ pogo flash <IMAGE> [--address <ADDR>] [--chip <CHIP>] [--flash-baud <BAUD>]
 - Guardrails are checked before anything touches the device; a refusal is `GUARDRAIL_REFUSED` (exit 8).
 - `--dry-run` checks guardrails and returns `data.plan` (`image`, `bytes`, `address`, `erase_all`, `verify`, `reset_after`) instead of the flash report, without connecting.
 - Flashing uses the espflash library with its bundled bootloader. The ESP32 bootloader lands at `0x1000`; newer chips use `0x0`.
+- The whole flash, connecting included, has a deadline: `--timeout`, else 120 s (`defaults.timeout` in the config does not apply, since it is sized for captures). Past it, pogo stops waiting and fails with `TIMEOUT` (exit 4); Ctrl-C stops it with `INTERRUPTED` (exit 130). Either can leave a partial image, so flash again before running. In `run`, the flash step always gets the 120 s deadline and `--timeout` is the capture's. The MCP `flash` tool takes `timeout` the same way.
+- Chip details (`flash_size_bytes`) are read before writing, while the chip is certainly in the bootloader.
 - Every real flash is appended to the audit log ([§11](guardrails.md#11-safety-guardrails)); a failure to write it is an `AUDIT_FAILED` warning.
 
 ```json

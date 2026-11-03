@@ -91,8 +91,12 @@ impl PogoServer {
             Ok(r) => r,
             Err(e) => return convert::fail(e),
         };
+        let timeout = match parse_duration(p.timeout.as_deref()) {
+            Ok(t) => t,
+            Err(e) => return convert::fail(e),
+        };
         let (reset_after, dry_run) = (!p.no_reset, p.dry_run);
-        blocking(move || ops::flash::flash(&sel, &req, reset_after, dry_run)).await
+        blocking(move || ops::flash::flash(&sel, &req, reset_after, dry_run, timeout, None)).await
     }
 
     #[tool(

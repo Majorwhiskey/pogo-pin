@@ -13,6 +13,7 @@ use crate::error::PogoError;
 /// Raw writes below this offset hit the bootloader or partition table.
 pub const APP_REGION_START: u32 = 0x10000;
 
+#[derive(Debug, Clone)]
 pub enum FlashImage {
     /// Preferred: converted to an app image and written with bootloader and partition table.
     Elf(Vec<u8>),
