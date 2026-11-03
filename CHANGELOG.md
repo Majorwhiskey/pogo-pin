@@ -1,15 +1,4 @@
-## [0.1.0-rc.3] - 2026-11-03
-
-### Bug Fixes
-
-- Read chip info before flashing so a chatty app cannot hang it
-- Give flashing a deadline and stop it on the first Ctrl-C
-## [0.1.0-rc.2] - 2026-11-03
-
-### Bug Fixes
-
-- Update Rust before release builds; release v0.1.0-rc.2
-## [0.1.0-rc.1] - 2026-11-03
+## [0.1.0] - 2026-11-03
 
 ### Features
 
@@ -33,6 +22,9 @@
 ### Bug Fixes
 
 - *(cli)* Show bin name as pogo on every OS
+- Update Rust before release builds; release v0.1.0-rc.2
+- Read chip info before flashing so a chatty app cannot hang it
+- Give flashing a deadline and stop it on the first Ctrl-C
 
 ### Documentation
 
@@ -60,6 +52,7 @@
 - Add license files and crate metadata for release
 - Add release workflow, changelog config, and install docs
 - Release v0.1.0-rc.1
+- Release v0.1.0-rc.3
 
 ### Other
 

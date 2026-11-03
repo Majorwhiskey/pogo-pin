@@ -37,6 +37,8 @@ postprocessors = [
 # output = "test.md"
 
 [git]
+# Release candidates fold into the release that follows them.
+ignore_tags = "-rc\\."
 # Parse commits according to the conventional commits specification.
 # See https://www.conventionalcommits.org
 conventional_commits = true

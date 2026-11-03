@@ -4,9 +4,9 @@ Give AI coding agents eyes and hands on real hardware. Flash, monitor, and probe
 
 **An agent-friendly hardware workbench CLI (`pogo`).** Flash, reset, monitor, probe, and measure ESP32 boards from the terminal, with deterministic, machine-readable output built for AI coding agents (like Claude Code) and humans alike.
 
-> **Status:** pre-alpha. This README and the files in [`docs/`](docs/) are the project specification. The project is `pogo-pin`; the binary is `pogo` and crates are `pogo-*`. The crate names are free on crates.io (checked 2026-10-31; see [docs/release.md](docs/release.md)).
+> **Status:** v0.1.0. Flashing, reset, serial capture, panic symbolization, and the MCP server are tested on real ESP32 boards; the probe commands (`gpio`, `i2c`, `power`, `probe`) are built and tested against a simulated probe, waiting for probe hardware. This README and the files in [`docs/`](docs/) are the specification. The project is `pogo-pin`; the binary is `pogo` and crates are `pogo-*`.
 >
-> **Last updated:** 2026-10-26
+> **Last updated:** 2026-11-03
 
 ---
 
@@ -112,7 +112,15 @@ Exit code `7` means the target faulted. The agent opens `src/sensors.rs:42`, fix
 
 ## Install
 
-pogo is not on crates.io or Homebrew yet. Install it from GitHub with Rust 1.99 or newer (`rustup update`); on Linux, first run `sudo apt install libudev-dev pkg-config`.
+Prebuilt binaries for Linux (x86_64, aarch64), macOS (Apple Silicon, Intel), and Windows are on [GitHub Releases](https://github.com/Majorwhiskey/pogo-pin/releases). The installer puts `pogo` in `~/.cargo/bin`:
+
+```console
+$ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/Majorwhiskey/pogo-pin/releases/latest/download/pogo-cli-installer.sh | sh
+```
+
+On Windows: `powershell -ExecutionPolicy Bypass -c "irm https://github.com/Majorwhiskey/pogo-pin/releases/latest/download/pogo-cli-installer.ps1 | iex"`.
+
+pogo is not on crates.io or Homebrew yet. To build from source instead, use Rust 1.99 or newer (`rustup update`); on Linux, first run `sudo apt install libudev-dev pkg-config`.
 
 ```console
 $ cargo install --git https://github.com/Majorwhiskey/pogo-pin pogo-cli
@@ -126,7 +134,7 @@ $ cd pogo-pin
 $ cargo install --path crates/pogo-cli
 ```
 
-Either way you get the `pogo` binary; check it with `pogo doctor`. Prebuilt binaries will be attached to [GitHub Releases](https://github.com/Majorwhiskey/pogo-pin/releases) once versions are tagged.
+Any of these gives you the `pogo` binary; check it with `pogo doctor`.
 
 ## Documentation
 
