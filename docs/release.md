@@ -11,7 +11,7 @@
 
 - Use cargo-dist (`dist`) to build binaries for Linux x86_64 and aarch64, macOS arm64 and x86_64, and Windows x86_64, plus shell and PowerShell installers and a Homebrew formula in a tap repository.
 - Publish crates to crates.io (`pogo-protocol`, `pogo-core`, `pogo-mcp`, `pogo-cli`, in that order). As of 2026-10-31 all four names are free; `pogo` itself is taken by an unrelated 2020 crate, so the install command is `cargo install pogo-cli` (it installs the `pogo` binary). No Homebrew core formula is named `pogo` or `pogo-pin`.
-- Each crate ships `LICENSE-MIT` and `LICENSE-APACHE` (symlinks to the workspace root) and the workspace README. `cargo package --workspace --offline` checks that all four package and build before publishing.
+- Each crate ships `LICENSE-MIT` and `LICENSE-APACHE` (symlinks to the workspace root) and the workspace README. Packaging all four with `cargo package --workspace --offline` (in a fresh target directory, see below) checks that they package and build before publishing.
 - Attach probe `.uf2` files to each GitHub release.
 - Semantic versioning for the tool; `schema_version` versions the JSON contract independently.
 - Generate `CHANGELOG.md` from Conventional Commits with `git-cliff`.
@@ -24,7 +24,7 @@
 
 1. Set `version` in the workspace `Cargo.toml` and the `pogo-*` path dependency versions.
 2. `git-cliff --tag vX.Y.Z -o CHANGELOG.md` and review it.
-3. Commit, then `cargo package --workspace --offline` and the usual checks.
+3. Commit, then the usual checks and `CARGO_TARGET_DIR=$(mktemp -d) cargo package --workspace --offline`. Use a fresh target directory: Cargo treats a packaged crate as unchanged when its version is, so re-checking a version it has built before compiles against the old build and can fail (or pass) wrongly.
 4. `git tag vX.Y.Z && git push origin vX.Y.Z`. The release workflow builds the binaries and installers and creates the GitHub release; it needs no secrets.
 5. Optional, later: publish the crates with `cargo login`, then `cargo publish -p pogo-protocol`, `pogo-core`, `pogo-mcp`, `pogo-cli`, in that order. Publishing cannot be undone.
 
