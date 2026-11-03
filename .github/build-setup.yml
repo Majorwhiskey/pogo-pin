@@ -1,0 +1,4 @@
+# Runner images can lag behind the workspace's rust-version (the macOS images shipped
+# 1.98 when 1.99 was required), so release builds update stable first.
+- name: Update Rust to the latest stable
+  run: rustup update stable && rustup default stable && rustc --version

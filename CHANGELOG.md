@@ -1,3 +1,8 @@
+## [0.1.0-rc.2] - 2026-11-03
+
+### Bug Fixes
+
+- Update Rust before release builds; release v0.1.0-rc.2
 ## [0.1.0-rc.1] - 2026-11-03
 
 ### Features
@@ -48,6 +53,7 @@
 - Add test matrix, schema drift, and cargo-deny checks
 - Add license files and crate metadata for release
 - Add release workflow, changelog config, and install docs
+- Release v0.1.0-rc.1
 
 ### Other
 
