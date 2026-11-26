@@ -1,5 +1,6 @@
 [package]
 name = "pogo-cli"
+default-run = "pogo"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
