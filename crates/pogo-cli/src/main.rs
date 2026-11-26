@@ -117,6 +117,8 @@ fn dispatch(cli: Cli, format: Format, style: &Style) -> Reply {
             token,
             allow_hosts,
         } => {
+            // `POGO_SERVE_TOKEN=` is the usual way to unset; it must not become a token.
+            let token = token.filter(|t| !t.is_empty());
             if !bind.ip().is_loopback() && token.is_none() {
                 return Reply::error(
                     ErrorBody::new(

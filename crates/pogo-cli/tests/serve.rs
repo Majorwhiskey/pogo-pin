@@ -190,3 +190,14 @@ fn non_loopback_without_a_token_is_refused() {
             .contains("without a token")
     );
 }
+
+#[test]
+fn an_empty_token_is_not_a_token() {
+    let out = Command::new(assert_cmd::cargo::cargo_bin("pogo"))
+        .env("POGO_SERVE_TOKEN", "")
+        .env_remove("POGO_FORMAT")
+        .args(["serve", "--bind", "0.0.0.0:0", "-f", "json"])
+        .output()
+        .unwrap();
+    assert_eq!(out.status.code(), Some(2));
+}
