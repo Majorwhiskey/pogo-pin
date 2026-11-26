@@ -4,7 +4,7 @@ Give AI coding agents eyes and hands on real hardware. Flash, monitor, and probe
 
 **An agent-friendly hardware workbench CLI (`pogo`).** Flash, reset, monitor, probe, and measure ESP32 boards from the terminal, with deterministic, machine-readable output built for AI coding agents (like Claude Code) and humans alike.
 
-> **Status:** v0.1.0. Flashing, reset, serial capture, panic symbolization, and the MCP server are tested on real ESP32 boards; the probe commands (`gpio`, `i2c`, `power`, `probe`) are built and tested against a simulated probe, waiting for probe hardware. `pogo test`, `pogo setup claude`, and `pogo serve` are on `main` but not in the v0.1.0 release. This README and the files in [`docs/`](docs/) are the specification. The project is `pogo-pin`; the binary is `pogo` and crates are `pogo-*`.
+> **Status:** v0.1.1. Flashing, reset, serial capture, panic symbolization, and the MCP server are tested on real ESP32 boards; the probe commands (`gpio`, `i2c`, `power`, `probe`) are built and tested against a simulated probe, waiting for probe hardware. This README and the files in [`docs/`](docs/) are the specification. The project is `pogo-pin`; the binary is `pogo` and crates are `pogo-*`.
 >
 > **Last updated:** 2026-11-26
 

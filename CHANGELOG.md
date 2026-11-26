@@ -1,3 +1,28 @@
+## [0.1.1] - 2026-11-26
+
+### Features
+
+- Add pogo test, pogo setup claude, the Claude Code plugin, and pogo serve
+- Add launcher menu, pogo-pin command, and pip packaging
+
+### Bug Fixes
+
+- Treat an empty serve token as no token
+- Match fault and reset patterns past the line display cut
+- Validate shunt and duration, stop probe on bad reply in power measure
+- Require --allow-bootloader-write for custom bootloader or table
+- Symbolize run panics with the flashed ELF before the config's
+- Switch power back on when power cycle is interrupted
+
+### Documentation
+
+- Add A/B test protocol for pogo versus plain CLI
+- Fix flash data example, schema list, and CI firmware notes
+- Move probe hardware work to v0.2
+
+### Testing
+
+- Give each serve test its own replay file (Windows locks open files)
 ## [0.1.0] - 2026-11-03
 
 ### Features
@@ -35,6 +60,7 @@
 - Mark Phase 0 complete and start Phase 1
 - Document flash commands; audit serial send; build firmware in CI
 - Mark Phase 2 acceptance; let HIL tests target one of several boards
+- Package-check releases in a fresh target directory
 
 ### Refactor
 
@@ -53,6 +79,7 @@
 - Add release workflow, changelog config, and install docs
 - Release v0.1.0-rc.1
 - Release v0.1.0-rc.3
+- Release v0.1.0
 
 ### Other
 

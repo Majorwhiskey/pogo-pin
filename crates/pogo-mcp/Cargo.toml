@@ -15,7 +15,7 @@ categories = ["embedded", "development-tools"]
 humantime = "2.4.0"
 hyper = { version = "1.12.0", features = ["server", "http1"] }
 hyper-util = { version = "0.1.21", features = ["tokio"] }
-pogo-core = { version = "0.1.0", path = "../pogo-core" }
+pogo-core = { version = "0.1.1", path = "../pogo-core" }
 rmcp = { version = "3.8.0", features = ["server", "macros", "schemars", "transport-io", "transport-streamable-http-server"] }
 schemars = "1.2.3"
 serde = { version = "1.0.229", features = ["derive"] }
