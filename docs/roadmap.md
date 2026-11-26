@@ -56,7 +56,7 @@ Acceptance met 2026-11-03: a Claude Code session flashed the test target on an E
 - [x] `reset --via probe` (host side; also used by `serial capture --reset` and `run`)
 - [ ] `.uf2` build
 
-The host side is done; the firmware and the acceptance checks wait for probe hardware (a Pico and an INA226).
+The host side is done and ships in v0.1. The firmware, the `.uf2` build, and the acceptance checks moved to [v0.2](#v02-probe-hardware) on 2026-11-26.
 
 **Acceptance:** `probe info` returns versions. `i2c scan` finds a BME280 at `0x76` or `0x77`. `reset --via probe` reboots the target and capture sees the boot. Unplugging the probe releases all pins within 100 ms (verified with an LED or multimeter).
 
@@ -66,16 +66,28 @@ The host side is done; the firmware and the acceptance checks wait for probe har
 - [x] Host statistics and CSV export (tested against a simulated probe)
 - [x] `power on|off|cycle` with guardrails (host side)
 
+The host side ships in v0.1; INA226 sampling and the acceptance checks moved to [v0.2](#v02-probe-hardware).
+
 **Acceptance:** idle current is within ±5% of a multimeter reading. Wi-Fi transmit peaks are visible in `max`/`p95`. A script doing `power cycle` then `serial capture --until READY` works end to end.
 
 ## Phase 6: Polish and release
 
-- [ ] `docs/agent-contract.md`, `docs/hardware.md`, wiring photo (the docs exist; the photo waits for the probe bench)
+- [x] `docs/agent-contract.md`, `docs/hardware.md` (the wiring photo moved to [v0.2](#v02-probe-hardware))
 - [x] Release automation: cargo-dist builds five platforms with shell and PowerShell installers; v0.1.0 released 2026-11-03
 - [ ] Homebrew tap, crates.io publish (deferred; see [release.md](release.md))
 - [ ] Demo recording ([§16](launch.md#16-launch-and-showcase-checklist)); firmware, prompt, and steps are ready in [demo.md](demo.md)
 
 **Acceptance:** on a fresh machine, install via Homebrew or the shell installer, `pogo doctor` passes, and the demo is reproducible.
+
+## v0.2: Probe hardware
+
+Deferred from v0.1 on 2026-11-26, so v0.1 can close without probe hardware. Starts when a Pico and an INA226 are on the bench.
+
+- [ ] Probe firmware: USB CDC, framing, handshake, pin allow-list, safe states, GPIO, I2C
+- [ ] `.uf2` build, attached to each GitHub release
+- [ ] INA226 sampling and streaming on the probe
+- [ ] Phase 4 and Phase 5 acceptance checks on real hardware
+- [ ] Wiring photo for `docs/hardware.md`
 
 ## Stretch goals
 
