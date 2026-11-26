@@ -59,7 +59,6 @@ jobs:
           /tmp/venv/bin/pip install dist/*.whl
           /tmp/venv/bin/pogo-pin --version
           /tmp/venv/bin/pogo --version
-          ldd /tmp/venv/bin/pogo
           /tmp/venv/bin/pogo devices --all
 
   macos:
