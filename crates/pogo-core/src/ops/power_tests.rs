@@ -204,3 +204,55 @@ fn power_cycle_switches_off_then_on() {
     let r = power::cycle(&sel, Duration::from_millis(50), true);
     assert_eq!(r.error.map(|e| e.code), Some(ErrorCode::GuardrailRefused));
 }
+
+#[test]
+fn measure_rejects_sub_millisecond_durations() {
+    let sel = setup("");
+    let req = MeasureRequest {
+        interval: Duration::from_micros(100),
+        duration: Duration::from_micros(500),
+        out: None,
+    };
+    let r = measure(&sel, &req);
+    assert_eq!(r.error.map(|e| e.code), Some(ErrorCode::Usage));
+}
+
+#[test]
+fn measure_rejects_a_shunt_that_is_not_positive() {
+    for shunt in ["0", "-0.1"] {
+        let sel = setup(&format!("[power]\nshunt_ohms = {shunt}\n"));
+        let req = MeasureRequest {
+            interval: Duration::from_millis(1),
+            duration: Duration::from_millis(5),
+            out: None,
+        };
+        let r = measure(&sel, &req);
+        assert_eq!(r.error.map(|e| e.code), Some(ErrorCode::Usage), "{shunt}");
+    }
+}
+
+#[test]
+fn unexpected_response_still_stops_the_probe() {
+    let sel = setup("");
+    let calls = script_stream(&[Response::Ok]);
+    let req = MeasureRequest {
+        interval: Duration::from_millis(1),
+        duration: Duration::from_millis(5),
+        out: None,
+    };
+    assert!(measure(&sel, &req).error.is_some());
+    let sent: Vec<Request> = calls
+        .lock()
+        .unwrap()
+        .iter()
+        .filter_map(|c| match c {
+            crate::transport::MockCall::Write(w) => {
+                pogo_protocol::codec::decode::<Request>(&mut w.clone())
+                    .ok()
+                    .map(|f| f.body)
+            }
+            _ => None,
+        })
+        .collect();
+    assert_eq!(sent.last(), Some(&Request::PowerStop), "{sent:?}");
+}

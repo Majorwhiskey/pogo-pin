@@ -141,10 +141,12 @@ pub fn measure(sel: &Selection, req: &MeasureRequest) -> OpResult<PowerMeasureDa
         if !(MIN_INTERVAL..=MAX_INTERVAL).contains(&req.interval) {
             return Err(usage("--interval must be between 100µs and 1s"));
         }
-        if req.duration.is_zero() || req.duration.as_nanos() / req.interval.as_nanos() > MAX_SAMPLES
+        // The probe takes whole milliseconds, so anything shorter would be sent as 0.
+        if req.duration < Duration::from_millis(1)
+            || req.duration.as_nanos() / req.interval.as_nanos() > MAX_SAMPLES
         {
             return Err(usage(
-                "--duration must be positive and give at most 10 million samples",
+                "--duration must be at least 1 ms and give at most 10 million samples",
             ));
         }
         let duration_ms =
@@ -156,6 +158,11 @@ pub fn measure(sel: &Selection, req: &MeasureRequest) -> OpResult<PowerMeasureDa
             .as_ref()
             .and_then(|p| p.shunt_ohms)
             .unwrap_or(DEFAULT_SHUNT_OHMS);
+        if !(shunt_ohms.is_finite() && shunt_ohms > 0.0) {
+            return Err(usage(format!(
+                "[power] shunt_ohms must be a positive number, not {shunt_ohms}"
+            )));
+        }
         let mut probe = Probe::open(sel, config, "power.measure")?;
 
         let mut samples: Vec<PowerSample> = Vec::new();
@@ -185,6 +192,7 @@ pub fn measure(sel: &Selection, req: &MeasureRequest) -> OpResult<PowerMeasureDa
             return Err(e);
         }
         if let Some(e) = bad {
+            let _ = probe.send(Request::PowerStop);
             return Err(e);
         }
         let (total, probe_dropped) = done.ok_or_else(|| {
