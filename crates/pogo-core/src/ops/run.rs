@@ -1,10 +1,11 @@
 //! `run` as an op: flash, then reset and capture from the first boot byte, under one lock.
 
+use std::path::Path;
 use std::time::Duration;
 
 use super::capture::{CaptureRequest, Live, capture_locked, check_patterns};
 use super::flash::{DEFAULT_FLASH_TIMEOUT, FlashRequest, flash_target, prepare};
-use super::outcome::{outcome_error, symbolize_panic};
+use super::outcome::outcome_error;
 use super::target::{Selection, acquire};
 use super::{DEFAULT_CAPTURE_TIMEOUT, OpResult};
 use crate::flash::FlashImage;
@@ -60,23 +61,18 @@ pub fn run(
         return OpResult::ok(data).with_warnings(warnings);
     }
 
+    let flashed_elf = match (&prepared, flash) {
+        (Some(p), Some(f)) if matches!(p.image, FlashImage::Elf(_)) => Some(f.image.as_path()),
+        _ => None,
+    };
+    let capture = &with_symbol_elf(capture, flashed_elf);
     let timeout = target.timeout(timeout, DEFAULT_CAPTURE_TIMEOUT);
     let done = match capture_locked(sel, &target, capture, true, timeout, live) {
         Ok(d) => d,
         Err(e) => return OpResult::fail(e).with_warnings(warnings),
     };
-    let mut result = done.out.data.capture;
+    let result = done.out.data.capture;
     warnings.extend(done.out.warnings);
-    // The flashed ELF is the natural symbol source when no other was given.
-    let flashed_elf = prepared
-        .as_ref()
-        .is_some_and(|p| matches!(p.image, FlashImage::Elf(_)));
-    if flashed_elf
-        && let Some(f) = flash
-        && result.panic.as_ref().is_some_and(|p| p.frames.is_empty())
-    {
-        warnings.extend(symbolize_panic(&mut result, Some(&f.image)));
-    }
     let error = outcome_error(&result, &capture.until, timeout, done.reconnect);
     let data = RunData {
         device: target.device.clone(),
@@ -85,4 +81,39 @@ pub fn run(
         capture: Some(result),
     };
     OpResult::ok(data).with_warnings(warnings).with_error(error)
+}
+
+/// Symbolize with an explicit `--elf`, else the ELF just flashed. Only then the
+/// device's configured `elf`, which may be an older build than the one running.
+fn with_symbol_elf(capture: &CaptureRequest, flashed: Option<&Path>) -> CaptureRequest {
+    CaptureRequest {
+        elf: capture.elf.clone().or(flashed.map(Path::to_path_buf)),
+        ..capture.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn flashed_elf_beats_the_configured_one_but_not_an_explicit_one() {
+        let flashed = Path::new("new.elf");
+        let none = CaptureRequest::default();
+        assert_eq!(
+            with_symbol_elf(&none, Some(flashed)).elf,
+            Some(PathBuf::from("new.elf"))
+        );
+        assert_eq!(with_symbol_elf(&none, None).elf, None);
+        let explicit = CaptureRequest {
+            elf: Some("mine.elf".into()),
+            ..CaptureRequest::default()
+        };
+        assert_eq!(
+            with_symbol_elf(&explicit, Some(flashed)).elf,
+            Some(PathBuf::from("mine.elf"))
+        );
+    }
 }
