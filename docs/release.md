@@ -5,7 +5,7 @@
 - Matrix: `ubuntu-latest`, `macos-latest`, `windows-latest`. Install `libudev-dev` on Linux.
 - Jobs: `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test --workspace`, `cargo deny check` (licenses and advisories).
 - Schema drift: regenerate schemas and fail on `git diff --exit-code schemas/`.
-- Firmware: build `firmware/probe` for `thumbv6m-none-eabi` (RP2040) and `thumbv8m.main-none-eabihf` (RP2350); build `firmware/test-target` for `xtensa-esp32-none-elf` (ESP32, the bench board), using the `esp-rs/xtensa-toolchain` action.
+- Firmware: build `pogo-protocol` (no_std) for `thumbv6m-none-eabi` (RP2040) and `thumbv8m.main-none-eabihf` (RP2350), and add `firmware/probe` to that job once it is written; build `firmware/test-target` and `firmware/demo` for `xtensa-esp32-none-elf` (ESP32, the bench board), using the `esp-rs/xtensa-toolchain` action.
 
 **Release:**
 

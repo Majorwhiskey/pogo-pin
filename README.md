@@ -4,9 +4,9 @@ Give AI coding agents eyes and hands on real hardware. Flash, monitor, and probe
 
 **An agent-friendly hardware workbench CLI (`pogo`).** Flash, reset, monitor, probe, and measure ESP32 boards from the terminal, with deterministic, machine-readable output built for AI coding agents (like Claude Code) and humans alike.
 
-> **Status:** v0.1.0. Flashing, reset, serial capture, panic symbolization, and the MCP server are tested on real ESP32 boards; the probe commands (`gpio`, `i2c`, `power`, `probe`) are built and tested against a simulated probe, waiting for probe hardware. This README and the files in [`docs/`](docs/) are the specification. The project is `pogo-pin`; the binary is `pogo` and crates are `pogo-*`.
+> **Status:** v0.1.0. Flashing, reset, serial capture, panic symbolization, and the MCP server are tested on real ESP32 boards; the probe commands (`gpio`, `i2c`, `power`, `probe`) are built and tested against a simulated probe, waiting for probe hardware. `pogo test`, `pogo setup claude`, and `pogo serve` are on `main` but not in the v0.1.0 release. This README and the files in [`docs/`](docs/) are the specification. The project is `pogo-pin`; the binary is `pogo` and crates are `pogo-*`.
 >
-> **Last updated:** 2026-11-03
+> **Last updated:** 2026-11-26
 
 ---
 
@@ -45,7 +45,7 @@ $ echo $?
   "duration_ms": 6412,
   "data": {
     "device": { "alias": "target", "port": "/dev/ttyACM0", "usb_serial": "F4:12:FA:9C:3A:10" },
-    "flash": { "chip": "esp32c3", "bytes_written": 214016, "verified": true, "duration_ms": 4870 },
+    "flash": { "chip": "esp32c3", "flash_size_bytes": 4194304, "regions": [{ "address": "0x10000", "bytes": 214016, "kind": "app" }], "verified": true, "reset_after": true, "duration_ms": 4870 },
     "capture": {
       "outcome": "fault",
       "matched": null,
@@ -106,7 +106,7 @@ Exit code `7` means the target faulted. The agent opens `src/sensors.rs:42`, fix
 - **Interactive TUI monitor.** Possible stretch goal; v1 is command-oriented.
 - **Non-Espressif targets.** The design leaves room for them (a `Target` trait), but STM32 and nRF support via probe-rs comes later.
 - **High-speed logic analysis.** Out of scope for v1.
-- **Wireless/OTA flashing and networked shared benches.** Out of scope for v1.
+- **Wireless/OTA flashing and multi-board bench farms.** Out of scope for v1. `pogo serve` exposes one machine's boards over HTTP; it does not schedule or share them.
 
 ---
 

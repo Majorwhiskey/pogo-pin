@@ -336,7 +336,7 @@ pogo mcp                              # start the MCP server on stdio (§9)
 
 ### `pogo schema`
 
-Prints the JSON Schema (2020-12) for a command's envelope as a bare document, not wrapped in an envelope. `--all` prints an object keyed by command name; `--all --out DIR` writes `DIR/<command>.json` and replies with `"data": { "files": [...] }`. Every command with a data shape has a schema: `devices`, `doctor`, `info`, `flash`, `reset`, `run`, `serial.capture`, `serial.send`, `i2c.*`, `gpio.*`, `power.*`, `probe.*`, and `config.*`. Commands without one (`schema`, `completions`, `mcp`) give `NOT_IMPLEMENTED` (exit 1), and unknown names give `USAGE` (exit 2). `cargo test` fails if `schemas/` is stale.
+Prints the JSON Schema (2020-12) for a command's envelope as a bare document, not wrapped in an envelope. `--all` prints an object keyed by command name; `--all --out DIR` writes `DIR/<command>.json` and replies with `"data": { "files": [...] }`. Every command with a data shape has a schema: `devices`, `doctor`, `info`, `flash`, `reset`, `run`, `serial.capture`, `serial.send`, `i2c.*`, `gpio.*`, `power.*`, `probe.*`, `config.*`, `test`, and `setup.claude`. Commands without one (`schema`, `completions`, `mcp`, `serve`) give `NOT_IMPLEMENTED` (exit 1), and unknown names give `USAGE` (exit 2). `cargo test` fails if `schemas/` is stale.
 
 ### `pogo config`
 
