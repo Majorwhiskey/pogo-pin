@@ -13,6 +13,8 @@
 - Require --allow-bootloader-write for custom bootloader or table
 - Symbolize run panics with the flashed ELF before the config's
 - Switch power back on when power cycle is interrupted
+- Make pogo the default binary for cargo run
+- *(deps)* Update heapless and rmcp for RustSec advisories
 
 ### Documentation
 
@@ -23,6 +25,12 @@
 ### Testing
 
 - Give each serve test its own replay file (Windows locks open files)
+
+### Miscellaneous Tasks
+
+- Release v0.1.1
+- Ignore the transitive chrono unmaintained advisory
+- Drop ldd from the wheel smoke test
 ## [0.1.0] - 2026-11-03
 
 ### Features
