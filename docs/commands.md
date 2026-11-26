@@ -103,7 +103,7 @@ pogo flash <IMAGE> [--address <ADDR>] [--chip <CHIP>] [--flash-baud <BAUD>]
 ```
 
 - `<IMAGE>` may be an **ELF** (preferred; converted to an app image and flashed with bootloader and partition table, following espflash defaults) or a raw **`.bin`**, which requires `--address`.
-- Raw writes below the app region (bootloader and partition table area) are refused unless `--allow-bootloader-write` is passed.
+- Raw writes below the app region (bootloader and partition table area), and a custom `--bootloader` or `--partition-table`, are refused unless `--allow-bootloader-write` is passed.
 - Verifies by default. Resets into run mode afterwards unless `--no-reset`.
 - `--erase-all` is guarded ([§11](guardrails.md#11-safety-guardrails)): `--confirm` must equal the resolved device's USB serial, so a device without one cannot be erased.
 - Guardrails are checked before anything touches the device; a refusal is `GUARDRAIL_REFUSED` (exit 8).

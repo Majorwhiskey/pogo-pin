@@ -161,6 +161,14 @@ pub fn check_guardrails(
             ),
         });
     }
+    if (opts.bootloader.is_some() || opts.partition_table.is_some()) && !opts.allow_bootloader_write
+    {
+        return Err(PogoError::GuardrailRefused {
+            reason: "a custom bootloader or partition table overwrites the region below \
+                     the app; pass --allow-bootloader-write if that is intended"
+                .into(),
+        });
+    }
     if opts.erase_all {
         let matches = match (&device.usb_serial, &opts.confirm) {
             (Some(serial), Some(confirm)) => serial.eq_ignore_ascii_case(confirm),
@@ -231,6 +239,30 @@ mod tests {
             ..FlashOptions::default()
         };
         assert!(check_guardrails(&bin(0x0), &allowed, &d).is_ok());
+    }
+
+    #[test]
+    fn custom_bootloader_or_partition_table_needs_permission() {
+        let d = device(Some("AA"));
+        let elf = FlashImage::Elf(vec![]);
+        for opts in [
+            FlashOptions {
+                bootloader: Some("bl.bin".into()),
+                ..FlashOptions::default()
+            },
+            FlashOptions {
+                partition_table: Some("pt.csv".into()),
+                ..FlashOptions::default()
+            },
+        ] {
+            let err = check_guardrails(&elf, &opts, &d).unwrap_err();
+            assert_eq!(err.code(), ErrorCode::GuardrailRefused);
+            let allowed = FlashOptions {
+                allow_bootloader_write: true,
+                ..opts
+            };
+            assert!(check_guardrails(&elf, &allowed, &d).is_ok());
+        }
     }
 
     #[test]

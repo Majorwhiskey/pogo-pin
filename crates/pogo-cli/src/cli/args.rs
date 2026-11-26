@@ -38,7 +38,8 @@ pub struct FlashArgs {
     /// USB serial of the device, confirming --erase-all
     #[arg(long, value_name = "USB_SERIAL", requires = "erase_all")]
     pub confirm: Option<String>,
-    /// Allow raw writes to the bootloader and partition table area
+    /// Allow writes to the bootloader and partition table area (a raw .bin there, or a
+    /// custom --bootloader or --partition-table)
     #[arg(long)]
     pub allow_bootloader_write: bool,
 }

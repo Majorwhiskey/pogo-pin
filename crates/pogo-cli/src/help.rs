@@ -55,7 +55,8 @@ JSON data: { device, chip, revision, features, mac, flash_size_bytes }";
 
 pub const FLASH: &str = "\
 An ELF is converted to an app image and flashed with bootloader and partition table.
-A raw .bin requires --address. Writes below the app region need --allow-bootloader-write.
+A raw .bin requires --address. Writes below the app region, and a custom --bootloader or
+--partition-table, need --allow-bootloader-write.
 Verifies by default and resets into run mode unless --no-reset.
 
 Examples:

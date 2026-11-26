@@ -39,7 +39,8 @@ Options:
           USB serial of the device, confirming --erase-all
 
       --allow-bootloader-write
-          Allow raw writes to the bootloader and partition table area
+          Allow writes to the bootloader and partition table area (a raw .bin there, or a custom
+          --bootloader or --partition-table)
 
   -h, --help
           Print help (see a summary with '-h')
@@ -84,7 +85,8 @@ Global options:
           Disable colors
 
 An ELF is converted to an app image and flashed with bootloader and partition table.
-A raw .bin requires --address. Writes below the app region need --allow-bootloader-write.
+A raw .bin requires --address. Writes below the app region, and a custom --bootloader or
+--partition-table, need --allow-bootloader-write.
 Verifies by default and resets into run mode unless --no-reset.
 
 Examples:

@@ -39,7 +39,8 @@ Options:
           USB serial of the device, confirming --erase-all
 
       --allow-bootloader-write
-          Allow raw writes to the bootloader and partition table area
+          Allow writes to the bootloader and partition table area (a raw .bin there, or a custom
+          --bootloader or --partition-table)
 
       --baud <N>
           Baud rate
