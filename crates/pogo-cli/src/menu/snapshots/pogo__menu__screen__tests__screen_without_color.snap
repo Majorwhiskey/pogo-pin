@@ -1,0 +1,30 @@
+---
+source: crates/pogo-cli/src/menu/screen.rs
+expression: "render(&style, \"0.1.1\", &status)"
+---
+
+██████╗  ██████╗  ██████╗  ██████╗ 
+██╔══██╗██╔═══██╗██╔════╝ ██╔═══██╗
+██████╔╝██║   ██║██║  ███╗██║   ██║
+██╔═══╝ ██║   ██║██║   ██║██║   ██║
+██║     ╚██████╔╝╚██████╔╝╚██████╔╝
+╚═╝      ╚═════╝  ╚═════╝  ╚═════╝ 
+
+Flash, watch, and probe ESP32 boards from the terminal.
+v0.1.1 • agent-friendly hardware workbench
+
+  Boards: /dev/ttyUSB0
+  Probe:  not connected
+  Agents: pogo mcp + -f json
+
+                        Menu
+  [1]  Devices             List connected boards and probes
+  [2]  Doctor              Check drivers, permissions, and config
+  [3]  Flash & Run         Flash an ELF, reset, and watch it boot
+  [4]  Serial Monitor      Watch the board's serial output (Ctrl-C to stop)
+  [5]  Reset Board         Reboot the board into its app
+  [6]  Run Tests           Run a pogo-test.toml suite on the board
+  [7]  Set Up Claude Code  Register pogo as an MCP server for Claude Code
+  [8]  Start MCP Server    Serve the tools over HTTP on 127.0.0.1:7646 (Ctrl-C to stop)
+  [9]  Quickstart Guide    Command cheat sheet for terminals and agents
+  [0]  Exit                Close pogo

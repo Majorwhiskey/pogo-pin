@@ -103,7 +103,7 @@ Exit code `7` means the target faulted. The agent opens `src/sensors.rs:42`, fix
 ### Non-goals (v1)
 
 - **eFuse burning, secure boot, flash encryption.** Never implemented. See [§11](docs/guardrails.md#11-safety-guardrails).
-- **Interactive TUI monitor.** Possible stretch goal; v1 is command-oriented.
+- **Interactive TUI monitor.** Possible stretch goal; v1 is command-oriented. Bare `pogo` in a terminal opens a launcher menu, but it only runs ordinary commands.
 - **Non-Espressif targets.** The design leaves room for them (a `Target` trait), but STM32 and nRF support via probe-rs comes later.
 - **High-speed logic analysis.** Out of scope for v1.
 - **Wireless/OTA flashing and multi-board bench farms.** Out of scope for v1. `pogo serve` exposes one machine's boards over HTTP; it does not schedule or share them.
@@ -112,7 +112,16 @@ Exit code `7` means the target faulted. The agent opens `src/sensors.rs:42`, fix
 
 ## Install
 
-Prebuilt binaries for Linux (x86_64, aarch64), macOS (Apple Silicon, Intel), and Windows are on [GitHub Releases](https://github.com/Majorwhiskey/pogo-pin/releases). The installer puts `pogo` in `~/.cargo/bin`:
+With pip (Linux, macOS, Windows; no Rust needed):
+
+```console
+$ pip install pogo-pin
+$ pogo-pin
+```
+
+Run with no arguments in a terminal, `pogo-pin` (or `pogo`) opens a menu: connected boards, then numbered options for the common tasks. Every option runs an ordinary `pogo` command, which it prints first. Both names take the same commands: `pogo-pin devices` is `pogo devices`. Use `pipx install pogo-pin` or a virtualenv if your system Python refuses global installs.
+
+Or prebuilt binaries for Linux (x86_64, aarch64), macOS (Apple Silicon, Intel), and Windows are on [GitHub Releases](https://github.com/Majorwhiskey/pogo-pin/releases). The installer puts `pogo` and `pogo-pin` in `~/.cargo/bin`:
 
 ```console
 $ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/Majorwhiskey/pogo-pin/releases/latest/download/pogo-cli-installer.sh | sh

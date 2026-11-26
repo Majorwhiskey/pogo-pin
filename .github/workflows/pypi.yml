@@ -1,0 +1,125 @@
+# pip wheels: `pip install pogo-pin`. Builds and smoke-tests on every push to main;
+# publishes to PyPI only for a v* tag, through trusted publishing (no token secret).
+# Kept apart from release.yml, which `dist generate` owns.
+name: PyPI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths-ignore: ["docs/**", "**.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    strategy:
+      matrix:
+        include:
+          - { runner: ubuntu-latest, target: x86_64 }
+          # Native arm: cross-compiling would need an aarch64 libudev.
+          - { runner: ubuntu-24.04-arm, target: aarch64 }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: PyO3/maturin-action@v1.51.0
+        with:
+          maturin-version: "1.16.0"
+          target: ${{ matrix.target }}
+          manylinux: "2_28"
+          # serialport needs libudev; maturin bundles it into the wheel.
+          before-script-linux: dnf install -y systemd-devel
+          args: --release --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: dist
+
+  linux-smoke:
+    needs: linux
+    strategy:
+      matrix:
+        include:
+          - { runner: ubuntu-latest, target: x86_64 }
+          - { runner: ubuntu-24.04-arm, target: aarch64 }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: dist
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install the wheel and run it
+        run: |
+          python -m venv /tmp/venv
+          /tmp/venv/bin/pip install dist/*.whl
+          /tmp/venv/bin/pogo-pin --version
+          /tmp/venv/bin/pogo --version
+          ldd /tmp/venv/bin/pogo
+          /tmp/venv/bin/pogo devices --all
+
+  macos:
+    strategy:
+      matrix:
+        target: [x86_64, aarch64]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: PyO3/maturin-action@v1.51.0
+        with:
+          maturin-version: "1.16.0"
+          target: ${{ matrix.target }}
+          args: --release --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-macos-${{ matrix.target }}
+          path: dist
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: PyO3/maturin-action@v1.51.0
+        with:
+          maturin-version: "1.16.0"
+          target: x64
+          args: --release --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-windows-x64
+          path: dist
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: PyO3/maturin-action@v1.51.0
+        with:
+          maturin-version: "1.16.0"
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-sdist
+          path: dist
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux-smoke, macos, windows, sdist]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@v1.14.3
+        with:
+          packages-dir: dist

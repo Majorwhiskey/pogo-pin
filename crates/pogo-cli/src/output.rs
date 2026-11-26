@@ -107,6 +107,9 @@ impl Style {
     pub fn yellow(&self, text: &str) -> String {
         self.paint("33", text)
     }
+    pub fn cyan(&self, text: &str) -> String {
+        self.paint("36", text)
+    }
 }
 
 #[derive(Serialize)]

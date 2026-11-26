@@ -30,6 +30,10 @@ workspace = true
 name = "pogo"
 path = "src/main.rs"
 
+[[bin]]
+name = "pogo-pin"
+path = "src/bin/pogo-pin.rs"
+
 [dev-dependencies]
 assert_cmd = "2.2.2"
 insta = { version = "1.49.0", features = ["json", "redactions"] }

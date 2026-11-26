@@ -5,6 +5,7 @@ mod help_serve;
 mod help_setup;
 mod help_suite;
 mod interrupt;
+mod menu;
 mod output;
 
 use std::ffi::OsString;
@@ -21,6 +22,9 @@ use crate::output::{Format, Printer, Reply, Style};
 fn main() -> ExitCode {
     let start = Instant::now();
     let args: Vec<OsString> = std::env::args_os().collect();
+    if menu::wanted(&args) {
+        return menu::run();
+    }
 
     let cli = match Cli::try_parse_from(&args) {
         Ok(cli) => cli,

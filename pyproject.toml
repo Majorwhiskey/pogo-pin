@@ -1,0 +1,32 @@
+# pip packaging only: maturin builds the Rust `pogo` and `pogo-pin` binaries into
+# platform wheels, so `pip install pogo-pin` needs no Rust toolchain. There is no
+# Python code; the version comes from the workspace Cargo.toml.
+
+[build-system]
+requires = ["maturin>=1.16,<2"]
+build-backend = "maturin"
+
+[project]
+name = "pogo-pin"
+description = "Agent-friendly hardware workbench for ESP32 boards: flash, reset, capture serial, and drive a probe, with JSON output and an MCP server"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+requires-python = ">=3.8"
+keywords = ["esp32", "embedded", "hardware", "mcp", "cli"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Embedded Systems",
+]
+dynamic = ["version"]
+
+[project.urls]
+Repository = "https://github.com/Majorwhiskey/pogo-pin"
+
+[tool.maturin]
+bindings = "bin"
+manifest-path = "crates/pogo-cli/Cargo.toml"

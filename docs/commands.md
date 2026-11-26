@@ -1,5 +1,11 @@
 # 7. Command reference
 
+## No command: the menu
+
+`pogo` (or `pogo-pin`) with no arguments, with stdin and stdout both a terminal and `POGO_FORMAT` unset, opens a launcher menu: a banner, the boards and probe on the USB ports (listing never opens a port), and numbered options for devices, doctor, flash and run, serial monitor, reset, tests, Claude Code setup, `pogo serve`, and a quickstart. Each option runs this binary with ordinary arguments and prints the command first; flashing and resetting ask to confirm. Enter picks option 1; `0` or end of input exits with 0; Ctrl-C stops the running command, and at the prompt it exits with 130. Without a terminal, or with any argument, nothing changes: no arguments is a `USAGE` error (exit 2), so agents and scripts never see the menu.
+
+`pogo-pin` runs the `pogo` installed beside it with the same arguments and exit code; it exists so the command matches the pip package name.
+
 ## Global flags
 
 ```

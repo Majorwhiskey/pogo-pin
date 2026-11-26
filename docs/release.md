@@ -18,6 +18,8 @@
 
 **How it is set up:** `dist-workspace.toml` holds the dist config (cargo-dist 0.32.0); `dist generate` writes `.github/workflows/release.yml` from it, so edit the config, not the workflow. A release builds the five targets above and attaches them to a GitHub release with a shell and a PowerShell installer; Linux builds install `libudev-dev`, and aarch64 Linux builds natively on `ubuntu-24.04-arm`. Homebrew is left out for now (adding it back is `installers += "homebrew"`, `tap = "Majorwhiskey/homebrew-tap"`, `publish-jobs = ["homebrew"]`, a public `homebrew-tap` repo, and a `HOMEBREW_TAP_TOKEN` secret). `cliff.toml` configures git-cliff 2.14.2. The probe `.uf2` files are not attached yet; that waits for the probe firmware.
 
+**PyPI (`pip install pogo-pin`):** `pyproject.toml` has maturin 1.16 build the `pogo` and `pogo-pin` binaries into platform wheels (no Python code; the version comes from the workspace `Cargo.toml`). `.github/workflows/pypi.yml`, separate from the generated `release.yml`, builds wheels for Linux x86_64 and aarch64 (manylinux_2_28, with `libudev` bundled into the wheel), macOS x86_64 and arm64, Windows x64, and an sdist. It installs each Linux wheel on a clean runner and runs it, on every push to `main`. For a `v*` tag it also publishes to PyPI through trusted publishing, so no token is stored. One-time setup on pypi.org: add a pending trusted publisher for project `pogo-pin`, owner `Majorwhiskey`, repository `pogo-pin`, workflow `pypi.yml`, environment `pypi`; then create the `pypi` environment in the GitHub repository settings. A PyPI version cannot be replaced once uploaded.
+
 **Installing without a release:** `cargo install --git https://github.com/Majorwhiskey/pogo-pin pogo-cli`, or clone and `cargo install --path crates/pogo-cli` (see the README).
 
 **Cutting a release:**
@@ -25,7 +27,7 @@
 1. Set `version` in the workspace `Cargo.toml` and the `pogo-*` path dependency versions.
 2. `git-cliff --tag vX.Y.Z -o CHANGELOG.md` and review it.
 3. Commit, then the usual checks and `CARGO_TARGET_DIR=$(mktemp -d) cargo package --workspace --offline`. Use a fresh target directory: Cargo treats a packaged crate as unchanged when its version is, so re-checking a version it has built before compiles against the old build and can fail (or pass) wrongly.
-4. `git tag vX.Y.Z && git push origin vX.Y.Z`. The release workflow builds the binaries and installers and creates the GitHub release; it needs no secrets.
+4. `git tag vX.Y.Z && git push origin vX.Y.Z`. The release workflow builds the binaries and installers and creates the GitHub release; it needs no secrets. The PyPI workflow publishes the wheels for the same tag.
 5. Optional, later: publish the crates with `cargo login`, then `cargo publish -p pogo-protocol`, `pogo-core`, `pogo-mcp`, `pogo-cli`, in that order. Publishing cannot be undone.
 
 [Back to README](../README.md)
