@@ -13,7 +13,7 @@ use super::detect::{
     BlockEnd, ResetEvent, is_panic_marker, panic_block_end, panic_report, parse_reset,
 };
 pub use super::result::{CaptureResult, Fault, FaultKind, Outcome, PatternMatch};
-use super::{DecodeOptions, LineSplitter, LogLine, RawLine, decode_line, strip_ansi};
+use super::{DecodeOptions, LineSplitter, LogLine, RawLine, decode_with_clean};
 use crate::deadline::Deadline;
 use crate::error::PogoError;
 use crate::transport::Transport;
@@ -145,14 +145,9 @@ impl<'a> Engine<'a> {
     }
 
     fn line(&mut self, raw: RawLine) {
-        let line = decode_line(raw, &self.opts.decode);
+        let (line, clean) = decode_with_clean(raw, &self.opts.decode);
         let index = self.line_count;
         self.line_count += 1;
-        let clean = if self.opts.decode.keep_ansi {
-            strip_ansi(&line.text)
-        } else {
-            line.text.clone()
-        };
         let t_ms = line.t_ms;
         (self.on_line)(&line);
         self.keep(line);

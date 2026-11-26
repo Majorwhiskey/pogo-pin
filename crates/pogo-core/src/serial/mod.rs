@@ -53,26 +53,33 @@ impl DecodeOptions {
 }
 
 pub fn decode_line(raw: RawLine, opts: &DecodeOptions) -> LogLine {
+    decode_with_clean(raw, opts).0
+}
+
+/// Also returns the full ANSI-stripped text, for matching: `text` is cut to
+/// `max_line_len`, and a pattern or reset marker past the cut must still be seen.
+pub fn decode_with_clean(raw: RawLine, opts: &DecodeOptions) -> (LogLine, String) {
     let lossy = String::from_utf8_lossy(&raw.bytes);
     let clean = strip_ansi(&lossy);
     let parsed = parse(&clean, opts.parser);
     let mut text = if opts.keep_ansi {
         lossy.into_owned()
     } else {
-        clean
+        clean.clone()
     };
     let cut = text.char_indices().nth(opts.max_line_len).map(|(i, _)| i);
     if let Some(i) = cut {
         text.truncate(i);
     }
-    LogLine {
+    let line = LogLine {
         t_ms: raw.t_ms,
         level: parsed.level,
         tag: parsed.tag,
         device_ts_ms: parsed.device_ts_ms,
         text,
         truncated: cut.is_some() || raw.truncated,
-    }
+    };
+    (line, clean)
 }
 
 #[cfg(test)]

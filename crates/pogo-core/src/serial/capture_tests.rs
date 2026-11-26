@@ -273,3 +273,17 @@ fn cancel_flag_stops_with_partial_data() {
     assert_eq!(r.outcome, Outcome::Interrupted);
     assert_eq!(texts(&r), ["booting"]);
 }
+
+#[test]
+fn detection_sees_text_beyond_the_display_cut() {
+    let mut o = opts(&[]);
+    o.decode.max_line_len = 10;
+    let r = run(
+        vec![Step::rx("0123456789 rst:0x1 (POWERON),boot:0xc\n")],
+        &o,
+        500,
+    );
+    assert_eq!(r.boot_count, 1);
+    assert_eq!(r.lines[0].text, "0123456789");
+    assert!(r.lines[0].truncated);
+}
