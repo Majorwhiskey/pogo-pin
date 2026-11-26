@@ -5,6 +5,7 @@ use pogo_core::ops::power_measure::{self, MeasureRequest, PowerMeasureData};
 
 use crate::cli::{GlobalArgs, PowerCommand};
 use crate::commands::target::{reply, selection};
+use crate::interrupt::interrupt_flag;
 use crate::output::{Render, Reply, Style};
 
 pub fn run(global: &GlobalArgs, cmd: &PowerCommand, style: &Style) -> Reply {
@@ -25,7 +26,10 @@ pub fn run(global: &GlobalArgs, cmd: &PowerCommand, style: &Style) -> Reply {
         }
         PowerCommand::On => reply(power::set(&sel, true, dry_run), style),
         PowerCommand::Off => reply(power::set(&sel, false, dry_run), style),
-        PowerCommand::Cycle { off_time } => reply(power::cycle(&sel, *off_time, dry_run), style),
+        PowerCommand::Cycle { off_time } => {
+            let cancel = interrupt_flag();
+            reply(power::cycle(&sel, *off_time, dry_run, Some(&cancel)), style)
+        }
     }
 }
 

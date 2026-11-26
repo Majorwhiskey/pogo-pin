@@ -155,7 +155,7 @@ impl PogoServer {
                     Ok(d) => d.unwrap_or(Duration::from_millis(500)),
                     Err(e) => return convert::fail(e),
                 };
-                blocking(move || power::cycle(&sel, off, dry_run)).await
+                blocking(move || power::cycle(&sel, off, dry_run, None)).await
             }
         }
     }

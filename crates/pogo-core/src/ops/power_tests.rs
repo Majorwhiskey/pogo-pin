@@ -178,7 +178,7 @@ fn measure_rejects_bad_intervals_before_touching_the_probe() {
 fn power_cycle_switches_off_then_on() {
     let sel = setup("");
     let calls = script(&[Response::Ok, Response::Ok]);
-    let r = power::cycle(&sel, Duration::from_millis(200), false);
+    let r = power::cycle(&sel, Duration::from_millis(200), false, None);
     assert!(r.error.is_none(), "{:?}", r.error);
     let sent: Vec<Request> = calls
         .lock()
@@ -201,7 +201,7 @@ fn power_cycle_switches_off_then_on() {
             Request::PowerSwitch { on: true }
         ]
     );
-    let r = power::cycle(&sel, Duration::from_millis(50), true);
+    let r = power::cycle(&sel, Duration::from_millis(50), true, None);
     assert_eq!(r.error.map(|e| e.code), Some(ErrorCode::GuardrailRefused));
 }
 
@@ -255,4 +255,23 @@ fn unexpected_response_still_stops_the_probe() {
         })
         .collect();
     assert_eq!(sent.last(), Some(&Request::PowerStop), "{sent:?}");
+}
+
+#[test]
+fn interrupted_cycle_switches_back_on_after_the_minimum_off_time() {
+    let sel = setup("[guardrails]\nmin_power_off_time = \"100ms\"\n");
+    let calls = script(&[Response::Ok, Response::Ok]);
+    let cancel = std::sync::atomic::AtomicBool::new(true);
+    let start = std::time::Instant::now();
+    let r = power::cycle(&sel, Duration::from_secs(30), false, Some(&cancel));
+    let took = start.elapsed();
+    assert_eq!(r.error.map(|e| e.code), Some(ErrorCode::Interrupted));
+    assert!(took >= Duration::from_millis(100), "{took:?}");
+    assert!(took < Duration::from_secs(5), "{took:?}");
+    let on_sent = calls.lock().unwrap().iter().any(|c| {
+        matches!(c, crate::transport::MockCall::Write(b)
+            if pogo_protocol::codec::decode::<Request>(&mut b.clone())
+                .is_ok_and(|f| f.body == Request::PowerSwitch { on: true }))
+    });
+    assert!(on_sent, "power was switched back on");
 }

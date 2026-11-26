@@ -2,7 +2,8 @@
 //! guardrails (docs/guardrails.md §11).
 
 use std::path::PathBuf;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use pogo_protocol::{Request, Response};
 use schemars::JsonSchema;
@@ -13,7 +14,7 @@ use super::probe::{Probe, unexpected};
 use super::target::{Selection, Target, acquire_probe, load_config};
 use crate::config::Config;
 use crate::envelope::{ErrorBody, Warning};
-use crate::error::PogoError;
+use crate::error::{ErrorCode, PogoError};
 use crate::lock;
 
 /// Used when `[guardrails]` does not set them.
@@ -173,7 +174,14 @@ pub struct PowerCycleData {
     pub dry_run: bool,
 }
 
-pub fn cycle(sel: &Selection, off_time: Duration, dry_run: bool) -> OpResult<PowerCycleData> {
+/// `cancel` (Ctrl-C) cuts the off time short, never below the minimum, and power still
+/// goes back on: an interrupted cycle must not leave the board off.
+pub fn cycle(
+    sel: &Selection,
+    off_time: Duration,
+    dry_run: bool,
+    cancel: Option<&AtomicBool>,
+) -> OpResult<PowerCycleData> {
     let run = || -> Result<(PowerCycleData, Vec<Warning>), ErrorBody> {
         let config = load_config(sel)?;
         let limits = Limits::from_config(&config);
@@ -189,8 +197,9 @@ pub fn cycle(sel: &Selection, off_time: Duration, dry_run: bool) -> OpResult<Pow
             return Ok((data, Vec::new()));
         }
         let mut probe = Probe::connect(target)?;
+        let mut interrupted = false;
         let result = switch(&mut probe, false).and_then(|()| {
-            std::thread::sleep(off_time);
+            interrupted = wait_off(off_time, limits.min_off, cancel);
             switch(&mut probe, true).map_err(|mut e| {
                 e.message = format!("power is OFF: switching back on failed: {}", e.message);
                 e
@@ -202,11 +211,35 @@ pub fn cycle(sel: &Selection, off_time: Duration, dry_run: bool) -> OpResult<Pow
         h.off_since = None;
         h.cycles.push(now_ms());
         warnings.extend(save(&path, &h));
+        if interrupted {
+            return Err(ErrorBody::new(
+                ErrorCode::Interrupted,
+                "power cycle interrupted; power was switched back on early",
+            ));
+        }
         Ok((data, warnings))
     };
     match run() {
         Ok((data, warnings)) => OpResult::ok(data).with_warnings(warnings),
         Err(e) => OpResult::fail(e),
+    }
+}
+
+/// Sleep for `off_time`, or once `cancel` is set, only until `min_off` has passed.
+/// Returns whether it was cancelled.
+fn wait_off(off_time: Duration, min_off: Duration, cancel: Option<&AtomicBool>) -> bool {
+    let start = Instant::now();
+    loop {
+        let cancelled = cancel.is_some_and(|c| c.load(Ordering::SeqCst));
+        let until = if cancelled {
+            min_off.min(off_time)
+        } else {
+            off_time
+        };
+        let Some(left) = until.checked_sub(start.elapsed()).filter(|d| !d.is_zero()) else {
+            return cancelled;
+        };
+        std::thread::sleep(left.min(Duration::from_millis(50)));
     }
 }
 
