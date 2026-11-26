@@ -3,6 +3,11 @@ all-features = false
 
 [advisories]
 version = 2
+ignore = [
+    # humantime is unmaintained but has no known vulnerability, and no maintained
+    # drop-in exists; it only parses durations like "10s" from flags and config.
+    { id = "RUSTSEC-2026-0542", reason = "unmaintained, no known vulnerability" },
+]
 
 [licenses]
 version = 2

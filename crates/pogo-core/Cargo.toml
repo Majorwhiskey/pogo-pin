@@ -30,4 +30,4 @@ toml = "1.1.8"
 workspace = true
 
 [dev-dependencies]
-heapless = "0.9.3"
+heapless = "0.9.4"
